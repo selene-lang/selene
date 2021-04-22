@@ -5,5 +5,6 @@
 
 void *emalloc(size_t);
 void *erealloc(void *, size_t, size_t);
+int grow_capacity(int);
 
 #endif

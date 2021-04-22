@@ -26,3 +26,9 @@ erealloc(void *p, size_t os, size_t ns)
 		exit(1);
 	return p;
 }
+
+int
+grow_capacity(int n)
+{
+	return n < 8 ? 8 : n << 1;
+}
