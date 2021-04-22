@@ -26,22 +26,26 @@ struct scheme {
 
 struct expr {
 	enum {
-		E_VAR, E_LIT, E_BINOP, E_FUNCALL, E_TAPP
+		E_VAR, E_NUM, E_OP, E_FUNCALL, E_TAPP
 	} type;
 	Array args;
-	Expr *fun;
+	Expr *left;
+	Expr *right;
 	char *name;
+	int number;
 	enum {
-		O_PLUS, O_MINUS, O_MULT, O_DIV
+		O_PLUS, O_MINUS, O_MULT, O_DIV, O_NEG
 	} op;
+	Type t;
 };
 
 struct statement {
 	enum {
-		S_EXPR, S_IF, S_WHILE
+		S_EXPR, S_IF, S_WHILE, S_VAR_DECL, S_AFFE
 	} type;
 	Array body;
 	Array elsb;
+	char *name;
 	Expr e;
 };
 

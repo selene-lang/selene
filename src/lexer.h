@@ -26,13 +26,6 @@ typedef struct {
 	int linum;
 } Token;
 
-typedef struct {
-	char *start;
-	char *current;
-
-	int linum;
-} Lexer;
-
 void lexer_init(char *src);
 Token lexer_get_token(void);
 

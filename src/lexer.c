@@ -5,6 +5,13 @@
 
 #include "lexer.h"
 
+typedef struct {
+	char *start;
+	char *current;
+
+	int linum;
+} Lexer;
+
 static Token mktoken(enum token t);
 
 static char next_char(void);
