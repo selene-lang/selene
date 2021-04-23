@@ -13,10 +13,15 @@ struct type {
 	enum {
 		T_CON, T_VAR, T_FUN
 	} type;
+	Type *args;
+	int narg;
 	Type *res;
-	Array args;
-	char *name;
+
 	int tvar;
+
+	char *name;
+	Type *targs;
+	int arity;
 };
 
 struct scheme {
@@ -28,10 +33,14 @@ struct expr {
 	enum {
 		E_VAR, E_NUM, E_OP, E_FUNCALL, E_TAPP
 	} type;
-	Array args;
+
 	Expr *left;
 	Expr *right;
 	char *name;
+	struct {
+		Type *args;
+		int len;
+	} polybind;
 	int number;
 	enum {
 		O_PLUS, O_MINUS, O_MULT, O_DIV, O_NEG
