@@ -238,11 +238,37 @@ binop(Expr lhs)
 }
 
 static Expr
+fun_call(Expr fun)
+{
+	Expr e, tmp;
+	Type t;
+
+	e.left = exprdup(fun);
+	array_init(&e.args, sizeof(Expr));
+	do {
+		tmp = expr();
+		array_write(&e.args, &tmp);
+	} while (match(TOKEN_COMMA));
+	expect(TOKEN_CPAR);
+
+	t.type = T_FUN;
+	t.res = types_dup(types_fresh_tvar());
+	t.args = emalloc(e.args.length * sizeof(Type));
+	for (int i = 0; i < e.args.length; ++i) {
+		types_eval_expr((Expr *)e.args.p + i);
+		t.args[i] = ((Expr *)e.args.p)[i].t;
+	}
+	types_unify(t, fun.t);
+	e.t = *t.res;
+	types_eval_expr(&e);
+	return e;
+}
+
+static Expr
 expr(void)
 {
 	return parse_precedence(P_ASSIGN);
 }
-
 
 static Expr
 parse_precedence(int precedence)

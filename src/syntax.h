@@ -5,7 +5,6 @@
 #include "common.h"
 
 typedef struct type Type;
-typedef struct scheme Scheme;
 typedef struct expr Expr;
 typedef struct statement Statement;
 
@@ -22,10 +21,10 @@ struct type {
 	int arity;
 };
 
-struct scheme {
+typedef struct {
 	Array bindings;
 	Type t;
-};
+} Scheme;
 
 struct expr {
 	enum {

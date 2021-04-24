@@ -10,6 +10,7 @@ static void unify_error(void);
 
 static int isftv(Type t, int v);
 static void bind(int v, Type t);
+static void ftv(Array *a, Type t);
 
 Array type_variables = {
 	.p = NULL,
@@ -65,6 +66,16 @@ types_mktcon(char *s, int arity, ...)
 		t.args[i] = va_arg(ap, Type);
 	va_end(ap);
 	return t;
+}
+
+Type *
+types_dup(Type t)
+{
+	Type *p;
+
+	p = emalloc(sizeof(Type));
+	*p = t;
+	return p;
 }
 
 void
@@ -132,4 +143,18 @@ types_fresh_tvar(void)
 	t.type = T_VAR;
 	array_write(&type_variables, &t);
 	return t;
+}
+
+Scheme
+types_gen(Type t)
+{
+	Scheme s;
+
+	array_init(&s.bindings, sizeof(int));
+}
+
+Expr
+types_inst(char *var, Type t)
+{
+	
 }

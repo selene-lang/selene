@@ -31,6 +31,7 @@ static const enum token single_token_table[255] = {
 	['('] = TOKEN_OPAR, [')'] = TOKEN_CPAR, ['{'] = TOKEN_OBRA,
 	['}'] = TOKEN_CBRA, [';'] = TOKEN_SEMI, ['+'] = TOKEN_PLUS,
 	['/'] = TOKEN_DIV,  ['*'] = TOKEN_MULT, ['-'] = TOKEN_MINUS,
+	[','] = TOKEN_COMMA
 };
 
 static Token
