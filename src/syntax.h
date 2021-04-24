@@ -14,13 +14,11 @@ struct type {
 		T_CON, T_VAR, T_FUN
 	} type;
 	Type *args;
-	int narg;
 	Type *res;
 
 	int tvar;
 
 	char *name;
-	Type *targs;
 	int arity;
 };
 
@@ -31,11 +29,11 @@ struct scheme {
 
 struct expr {
 	enum {
-		E_VAR, E_NUM, E_OP, E_FUNCALL, E_TAPP
+		E_VAR, E_NUM, E_OP, E_FUNCALL
 	} type;
-
 	Expr *left;
 	Expr *right;
+	Array args;
 	char *name;
 	struct {
 		Type *args;
@@ -43,7 +41,8 @@ struct expr {
 	} polybind;
 	int number;
 	enum {
-		O_PLUS, O_MINUS, O_MULT, O_DIV, O_NEG
+		O_PLUS, O_MINUS, O_MULT, O_DIV, O_NEG, O_EQU, O_GRT, O_GRTEQ,
+		O_LWR, O_LWREQ
 	} op;
 	Type t;
 };

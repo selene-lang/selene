@@ -4,8 +4,10 @@
 #include "common.h"
 #include "syntax.h"
 
-Type mktcon(char *s, int arity, ...);
-void unify(Type t1, Type t2);
-Type eval_type(Type t);
+Type types_mktcon(char *s, int arity, ...);
+void types_unify(Type t1, Type t2);
+void types_eval(Type *t);
+void types_eval_expr(Expr *e);
+Type types_fresh_tvar(void);
 
 #endif

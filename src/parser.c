@@ -31,6 +31,7 @@ static enum token peek(void);
 static Expr *exprdup(Expr e);
 
 static int isunary(enum token t);
+static int isopbool(enum token t);
 static int prec(enum token t);
 static int assoc(enum token t);
 static Expr rulef(enum token t, Expr e);
@@ -45,7 +46,7 @@ static Expr expr(void);
 static Expr parse_precedence(int precedence);
 
 static Parser parser;
-static const ParseRule rules[TOKEN_EOF] = {
+static const ParseRule rules[TOKEN_EOF + 1] = {
 	[TOKEN_ASSIGN]    = {ASSOC_RIGHT, P_ASSIGN, binop},
 	[TOKEN_EQUAL]     = {ASSOC_LEFT,  P_EQU,    binop},
 	[TOKEN_GREATER]   = {ASSOC_NONE,  P_COMP,   binop},
@@ -57,6 +58,18 @@ static const ParseRule rules[TOKEN_EOF] = {
 	[TOKEN_MULT]      = {ASSOC_LEFT,  P_FACT,   binop},
 	[TOKEN_DIV]       = {ASSOC_LEFT,  P_FACT,   binop},
 	[TOKEN_OPAR]      = {ASSOC_LEFT,  P_CALL,   fun_call},
+};
+
+static const int tok2op[TOKEN_EOF + 1] = {
+	[TOKEN_EQUAL]     = O_EQU,
+	[TOKEN_GREATER]   = O_GRT,
+	[TOKEN_GREATEREQ] = O_GRTEQ,
+	[TOKEN_LOWER]     = O_LWR,
+	[TOKEN_LOWEREQ]   = O_LWREQ,
+	[TOKEN_PLUS]      = O_PLUS,
+	[TOKEN_MINUS]     = O_MINUS,
+	[TOKEN_MULT]      = O_MULT,
+	[TOKEN_DIV]       = O_DIV
 };
 
 static void
@@ -114,6 +127,21 @@ isunary(enum token t)
 }
 
 static int
+isopbool(enum token t)
+{
+	switch (t) {
+	case TOKEN_LOWER:
+	case TOKEN_LOWEREQ:
+	case TOKEN_GREATER:
+	case TOKEN_GREATEREQ:
+	case TOKEN_EQUAL:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
+static int
 prec(enum token t)
 {
 	if (rules[t].f != NULL)
@@ -145,7 +173,7 @@ number(void)
 		if (parser.previous.src[i] != '_')
 			e.number = e.number * 10 + parser.previous.src[i] - '0';
 	e.type = E_NUM;
-	e.t = mktcon("int", 0);
+	e.t = types_mktcon("int", 0);
 	return e;
 }
 
@@ -199,6 +227,14 @@ binop(Expr lhs)
 		rhs = parse_precedence(prec(t));
 		break;
 	}
+	types_unify(lhs.t, rhs.t);
+	e.t = isopbool(t) ? types_mktcon("bool", 0) : lhs.t;
+	e.type = E_OP;
+	e.left = exprdup(lhs);
+	e.right = exprdup(rhs);
+	e.op = tok2op[t];
+	types_eval_expr(&e);
+	return e;
 }
 
 static Expr
