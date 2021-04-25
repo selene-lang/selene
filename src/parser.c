@@ -42,8 +42,10 @@ static Expr simple_expr(void);
 static Expr binop(Expr lhs);
 static Expr fun_call(Expr fun);
 static Expr expr(void);
-
 static Expr parse_precedence(int precedence);
+
+static Statement ifstatement(void);
+static Statement varstatement(void);
 
 static Parser parser;
 static const ParseRule rules[TOKEN_EOF + 1] = {

@@ -29,6 +29,9 @@ static int
 isftv(Type t, int v)
 {
 	switch (t.type) {
+	case T_FUN:
+		if (isftv(*t.res, v))
+			return 1; /* fallthrought */
 	case T_CON:
 		for (int i = 0; i < t.arity; ++i)
 			if (isftv(t.args[i], v))
@@ -36,11 +39,6 @@ isftv(Type t, int v)
 		return 0;
 	case T_VAR:
 		return t.tvar == v;
-	case T_FUN:
-		for (int i = 0; i < t.arity; ++i)
-			if (isftv(t.args[i], v))
-				return 1;
-		return isftv(*t.res, v);
 	}
 }
 
@@ -50,6 +48,20 @@ bind(int v, Type t)
 	if (isftv(t, v))
 		unify_error();
 	((Type *)type_variables.p)[v] = t;
+}
+
+static void
+ftv(Array *a, Type t)
+{
+	switch (t.type) {
+	case T_VAR:
+		array_write(a, &t.tvar);
+		break;
+	case T_FUN:
+		ftv(a, *t.res); /* fallthrought */
+	case T_CON:
+		break;
+	}
 }
 
 Type
