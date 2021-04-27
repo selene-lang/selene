@@ -6,11 +6,21 @@
 #include "memory.h"
 #include "types.h"
 
+typedef struct {
+	struct selem {
+		int n;
+		Type t;
+	} *s;
+	int length;
+} Substitution;
+
 static void unify_error(void);
 
 static int isftv(Type t, int v);
 static void bind(int v, Type t);
 static void ftv(Array *a, Type t);
+
+static void app_subst(Substitution s, Type *t);
 
 Array type_variables = {
 	.p = NULL,
@@ -55,12 +65,37 @@ ftv(Array *a, Type t)
 {
 	switch (t.type) {
 	case T_VAR:
+		for (int i = 0; i < a->length; ++i)
+			if (((int *)a->p)[i] == t.tvar)
+				return;
 		array_write(a, &t.tvar);
 		break;
 	case T_FUN:
 		ftv(a, *t.res); /* fallthrought */
 	case T_CON:
+		for (int i = 0; i < t.arity; ++i)
+			ftv(a, t.args[i]);
 		break;
+	}
+}
+
+static void
+app_subst(Substitution s, Type *t)
+{
+	switch (t->type) {
+	case T_VAR:
+		for (int i = 0; i < s.length; ++i)
+			if (s.s[i].n == t->tvar) {
+				*t = s.s[i].t;
+				return;
+			}
+		break;
+	case T_FUN:
+		app_subst(s, t->res); /* fallthrought */
+	case T_CON:
+		for (int i = 0; i < s.length; ++i)
+			app_subst(s, t->args + i);
+
 	}
 }
 
@@ -163,10 +198,35 @@ types_gen(Type t)
 	Scheme s;
 
 	array_init(&s.bindings, sizeof(int));
+	ftv(&s.bindings, t);
+	s.t = t;
+	return s;
 }
 
 Expr
-types_inst(char *var, Type t)
+types_inst(char *var, Scheme s)
+{
+	Expr e;
+	Substitution subst;
+
+	e.type = E_VAR;
+	subst.length = s.bindings.length;
+	subst.s = emalloc(subst.length * sizeof(struct selem));
+	e.polybind.len = subst.length;
+	e.polybind.args = emalloc(subst.length * sizeof(Type));
+	for (int i = 0; i < subst.length; ++i) {
+		subst.s[i].n = ((int *)s.bindings.p)[i];
+		subst.s[i].t = types_fresh_tvar();
+		e.polybind.args[i] = subst.s[i].t;
+	}
+	app_subst(subst, &s.t);
+	e.t = s.t;
+	e.name = var;
+	return e;
+}
+
+Scheme
+types_get_ctx(char *var)
 {
 	
 }

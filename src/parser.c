@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "lexer.h"
 #include "memory.h"
 #include "parser.h"
@@ -37,6 +39,7 @@ static int assoc(enum token t);
 static Expr rulef(enum token t, Expr e);
 
 static Expr number(void);
+static Expr var(void);
 static Expr unary(void);
 static Expr simple_expr(void);
 static Expr binop(Expr lhs);
@@ -177,6 +180,16 @@ number(void)
 	e.type = E_NUM;
 	e.t = types_mktcon("int", 0);
 	return e;
+}
+
+static Expr
+var(void)
+{
+	char v[parser.previous.length + 1];
+
+	memcpy(v, parser.previous.src, parser.previous.length);
+	v[parser.previous.length] = '\0';
+	return types_inst(v, types_get_ctx(v));
 }
 
 static Expr

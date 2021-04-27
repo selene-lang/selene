@@ -13,6 +13,8 @@ void types_eval_expr(Expr *e);
 Type types_fresh_tvar(void);
 
 Scheme types_gen(Type t);
-Expr types_inst(char *var, Type t);
+Expr types_inst(char *var, Scheme s);
+
+Scheme types_get_ctx(char *var);
 
 #endif
