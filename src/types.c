@@ -14,6 +14,11 @@ typedef struct {
 	int length;
 } Substitution;
 
+typedef struct {
+	char *var;
+	Scheme s;
+} Celem;
+
 static void unify_error(void);
 
 static int isftv(Type t, int v);
@@ -25,6 +30,13 @@ static void app_subst(Substitution s, Type *t);
 Array type_variables = {
 	.p = NULL,
 	.esize = sizeof(Type),
+	.length = 0,
+	.capacity = 0
+};
+
+Array context = {
+	.p = NULL,
+	.esize = sizeof(Celem),
 	.length = 0,
 	.capacity = 0
 };
@@ -228,5 +240,8 @@ types_inst(char *var, Scheme s)
 Scheme
 types_get_ctx(char *var)
 {
-	
+	for (int i = 0; i < context.length; ++i)
+		if (!strcmp(var, ((Celem *)context.p)[i].var))
+			return ((Celem *)context.p)[i].s;
+	exit(1);
 }

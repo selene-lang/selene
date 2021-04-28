@@ -219,6 +219,8 @@ simple_expr(void)
 		Expr e = expr();
 		expect(TOKEN_CPAR);
 		return e;
+	} else if (match(TOKEN_IDENT)) {
+		return var();
 	} else {
 		exit(1);
 	}
