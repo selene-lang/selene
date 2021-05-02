@@ -1,12 +1,13 @@
 CC ?= cc
-CFLAGS ?= -O2 -Wall
+CFLAGS += -O2 -Wall
 INCLUDES = -I.
 SRCS = debug.c parser.c lexer.c array.c memory.c vm.c types.c selene.c
 OBJS = $(SRCS:.c=.o)
+TARGET = selene
 
 all: $(TARGET)
 
-$(TARGET): $(TARGET).c $(OBJS)
+$(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $(TARGET) $(OBJS) $(LDFLAGS)
 
 .c.o:

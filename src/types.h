@@ -16,5 +16,6 @@ Scheme types_gen(Type t);
 Expr types_inst(char *var, Scheme s);
 
 Scheme types_get_ctx(char *var);
+void types_add_var(char *var, Scheme s);
 
 #endif

@@ -44,7 +44,7 @@ static Expr unary(void);
 static Expr simple_expr(void);
 static Expr binop(Expr lhs);
 static Expr fun_call(Expr fun);
-static Expr expr(void);
+Expr expr(void);
 static Expr parse_precedence(int precedence);
 
 static Statement ifstatement(void);
@@ -76,6 +76,13 @@ static const int tok2op[TOKEN_EOF + 1] = {
 	[TOKEN_MULT]      = O_MULT,
 	[TOKEN_DIV]       = O_DIV
 };
+
+void
+parser_init(char *program)
+{
+	lexer_init(program);
+	next_token();
+}
 
 static void
 next_token(void)
@@ -173,7 +180,7 @@ number(void)
 {
 	Expr e;
 
-	e.number = 0;
+	e = (Expr){.number = 0};
 	for (int i = 0; i < parser.previous.length; ++i)
 		if (parser.previous.src[i] != '_')
 			e.number = e.number * 10 + parser.previous.src[i] - '0';
@@ -195,10 +202,8 @@ var(void)
 static Expr
 unary(void)
 {
-	enum token t;
 	Expr e, arg;
 
-	t = parser.previous.t;
 	arg = parse_precedence(P_UNARY);
 	e.type = E_OP;
 	e.t = arg.t;
@@ -233,7 +238,7 @@ binop(Expr lhs)
 	enum token t;
 
 	t = parser.previous.t;
-	switch (prec(t)) {
+	switch (assoc(t)) {
 	case ASSOC_LEFT:
 		rhs = parse_precedence(prec(t) + 1);
 		break;
@@ -281,7 +286,7 @@ fun_call(Expr fun)
 	return e;
 }
 
-static Expr
+Expr
 expr(void)
 {
 	return parse_precedence(P_ASSIGN);
@@ -292,7 +297,6 @@ parse_precedence(int precedence)
 {
 	Expr e;
 
-	next_token();
 	e = simple_expr();
 	while (prec(peek()) >= precedence) {
 		enum token t = peek();
@@ -300,4 +304,35 @@ parse_precedence(int precedence)
 		e = rulef(t, e);
 	}
 	return e;
+}
+
+static Statement
+ifstatement(void)
+{
+	Statement s;
+
+	return s;
+}
+
+static Statement
+varstatement(void)
+{
+	Statement s;
+	Scheme sch;
+	char v[parser.current.length + 1];
+
+	expect(TOKEN_IDENT);
+	memcpy(v, parser.previous.src, parser.previous.length);
+	v[parser.previous.length] = '\0';
+
+	sch.t = types_fresh_tvar();
+	array_init(&sch.bindings, sizeof(int));
+	types_add_var(v, sch);
+
+	s.t = sch.t;
+	s.name = strdup(v);
+	s.type = S_VAR_DECL;
+
+	expect(TOKEN_SEMI);
+	return s;
 }

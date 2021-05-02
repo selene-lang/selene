@@ -67,7 +67,7 @@ skip_whitespaces(void)
 			next_char();
 			break;
 		default:
-			break;
+			return;
 		}
 	}
 }

@@ -131,7 +131,7 @@ print_expr(Expr e)
 		printf("}");
 		break;
 	}
-	printf(",");
+	printf(",\"type\":");
 	print_type(e.t);
 	printf("}");
 }

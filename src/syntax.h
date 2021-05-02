@@ -54,6 +54,7 @@ struct statement {
 	Array elsb;
 	char *name;
 	Expr e;
+	Type t;
 };
 
 #endif

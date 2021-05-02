@@ -124,6 +124,7 @@ types_mktcon(char *s, int arity, ...)
 	for (int i = 0; i < arity; ++i)
 		t.args[i] = va_arg(ap, Type);
 	va_end(ap);
+	t.name = s;
 	return t;
 }
 
@@ -152,6 +153,12 @@ types_unify(Type t1, Type t2)
 			for (int i = 0; i < t1.arity; ++i)
 				types_unify(t1.args[i], t2.args[i]);
 		types_unify(*t1.res, *t2.res);
+	} else if (t1.type == T_VAR) {
+		bind(t1.tvar, t2);
+	} else if (t2.type == T_VAR) {
+		bind(t2.tvar, t1);
+	} else {
+		unify_error();
 	}
 }
 
@@ -244,4 +251,10 @@ types_get_ctx(char *var)
 		if (!strcmp(var, ((Celem *)context.p)[i].var))
 			return ((Celem *)context.p)[i].s;
 	exit(1);
+}
+
+void
+types_add_var(char *var, Scheme s)
+{
+
 }
