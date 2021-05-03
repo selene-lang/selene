@@ -47,8 +47,10 @@ static Expr fun_call(Expr fun);
 Expr expr(void);
 static Expr parse_precedence(int precedence);
 
+static Array block(void);
 static Statement ifstatement(void);
 static Statement varstatement(void);
+static Statement statement(void);
 
 static Parser parser;
 static const ParseRule rules[TOKEN_EOF + 1] = {
@@ -185,7 +187,7 @@ number(void)
 		if (parser.previous.src[i] != '_')
 			e.number = e.number * 10 + parser.previous.src[i] - '0';
 	e.type = E_NUM;
-	e.t = types_mktcon("int", 0);
+	e.t = &types_int;
 	return e;
 }
 
@@ -250,12 +252,11 @@ binop(Expr lhs)
 		break;
 	}
 	types_unify(lhs.t, rhs.t);
-	e.t = isopbool(t) ? types_mktcon("bool", 0) : lhs.t;
+	e.t = isopbool(t) ? &types_bool : lhs.t;
 	e.type = E_OP;
 	e.left = exprdup(lhs);
 	e.right = exprdup(rhs);
 	e.op = tok2op[t];
-	types_eval_expr(&e);
 	return e;
 }
 
@@ -274,15 +275,13 @@ fun_call(Expr fun)
 	expect(TOKEN_CPAR);
 
 	t.type = T_FUN;
-	t.res = types_dup(types_fresh_tvar());
-	t.args = emalloc(e.args.length * sizeof(Type));
+	t.res = types_fresh_tvar();
+	t.args = emalloc(e.args.length * sizeof(Type *));
 	for (int i = 0; i < e.args.length; ++i) {
-		types_eval_expr((Expr *)e.args.p + i);
 		t.args[i] = ((Expr *)e.args.p)[i].t;
 	}
-	types_unify(t, fun.t);
-	e.t = *t.res;
-	types_eval_expr(&e);
+	types_unify(&t, fun.t);
+	e.t = t.res;
 	return e;
 }
 
@@ -306,17 +305,46 @@ parse_precedence(int precedence)
 	return e;
 }
 
+static Array
+block(void)
+{
+	Array a;
+	Statement s;
+	int ctx_len;
+
+	expect(TOKEN_OBRA);
+
+	ctx_len = types_get_ctx_len();
+	array_init(&a, sizeof(Statement));
+
+	while (!match(TOKEN_CBRA)) {
+		s = statement();
+		array_write(&a, &s);
+	}
+	types_set_ctx_len(ctx_len);
+	return a;
+}
+
 static Statement
 ifstatement(void)
 {
 	Statement s;
 
+	s.e = expr();
+	types_unify(s.e.t, &types_int);
+	s.body = block();
+	if (match(TOKEN_ELSE)) {
+		s.elseb = block();
+	} else {
+		array_init(&s.elseb, sizeof(Statement));
+	}
 	return s;
 }
 
 static Statement
 varstatement(void)
 {
+	Type *t;
 	Statement s;
 	Scheme sch;
 	char v[parser.current.length + 1];
@@ -335,4 +363,18 @@ varstatement(void)
 
 	expect(TOKEN_SEMI);
 	return s;
+}
+
+static Statement
+statement(void)
+{
+	if (match(TOKEN_IF)) {
+		return ifstatement();
+	} else if (match(TOKEN_VAR)) {
+		return varstatement();
+	} else {
+		Statement s = {.type = S_EXPR, .e = expr()};
+		expect(TOKEN_SEMI);
+		return s;
+	}
 }
