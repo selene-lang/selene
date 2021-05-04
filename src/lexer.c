@@ -100,7 +100,7 @@ static enum token
 check_keyword(int n, char *s, enum token t)
 {
 	if ((int)(lexer.current - lexer.start) == strlen(s) &&
-	    memcmp(lexer.start + n, s + n, strlen(s) - n)) {
+	    !memcmp(lexer.start + n, s + n, strlen(s) - n)) {
 		return t;
 	}
 	return TOKEN_IDENT;
@@ -148,8 +148,8 @@ lexer_get_token(void)
 		return mktoken(TOKEN_EOF);
 	c = next_char();
 
-	if (single_token_table[c])
-		return mktoken(single_token_table[c]);
+	if (single_token_table[(int)c])
+		return mktoken(single_token_table[(int)c]);
 	if (isdigit(c))
 		return number();
 	if (isalpha(c) || c == '_')

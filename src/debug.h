@@ -8,5 +8,6 @@
 void print_token(Token t);
 void print_type(Type t);
 void print_expr(Expr e);
+void print_statement(Statement s);
 
 #endif

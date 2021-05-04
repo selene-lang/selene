@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "debug.h"
 #include "lexer.h"
 #include "syntax.h"
 
@@ -64,7 +65,7 @@ print_token(Token t)
 		printf("EOF\n");
 		return;
 	}
-	printf("\t%*s\n", t.length, t.src);
+	printf("\t%.*s\n", t.length, t.src);
 }
 
 void
@@ -137,10 +138,42 @@ print_expr(Expr e)
 }
 
 void
+print_block(Array a)
+{
+	printf("[");
+	for (int i = 0; i < a.length; ++i) {
+		if (i != 0) printf(",");
+		print_statement(((Statement *)a.p)[i]);
+	}
+	printf("]");
+}
+
+void
 print_statement(Statement s)
 {
 	printf("{");
 	switch (s.type) {
+	case S_EXPR:
+		printf("\"expr\":");
+		print_expr(s.e);
+		break;
+	case S_VAR_DECL:
+		printf("\"variable declaration\":{\"name\":\"%s\",\"type\":",
+		       s.name);
+		print_type(*s.t);
+		printf("}");
+		break;
+	case S_IF:
+		printf("\"if\":{\"condition\":");
+		print_expr(s.e);
+		printf(",\"true branch\":");
+		print_block(s.body);
+		if (s.elseb.length != 0) {
+			printf(",\"false branch\":");
+			print_block(s.elseb);
+		}
+		break;
 	}
 	printf("}");
 }
+

@@ -1,3 +1,4 @@
 *~
 *.o
 src/selene
+compile_commands.json

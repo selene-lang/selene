@@ -5,6 +5,7 @@
 #include "syntax.h"
 
 Expr expr(void);
+Statement statement(void);
 void parser_init(char *program);
 
 #endif

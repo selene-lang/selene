@@ -41,6 +41,9 @@ Array context = {
 	.capacity = 0
 };
 
+Type types_int = {.type = T_CON, .args = NULL, .arity = 0, .name = "int"};
+Type types_bool = {.type = T_CON, .args = NULL, .arity = 0, .name = "bool"};
+
 static void
 unify_error(void)
 {

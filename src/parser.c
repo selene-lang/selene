@@ -50,7 +50,7 @@ static Expr parse_precedence(int precedence);
 static Array block(void);
 static Statement ifstatement(void);
 static Statement varstatement(void);
-static Statement statement(void);
+Statement statement(void);
 
 static Parser parser;
 static const ParseRule rules[TOKEN_EOF + 1] = {
@@ -344,7 +344,6 @@ ifstatement(void)
 static Statement
 varstatement(void)
 {
-	Type *t;
 	Statement s;
 	Scheme sch;
 	char v[parser.current.length + 1];
@@ -365,7 +364,7 @@ varstatement(void)
 	return s;
 }
 
-static Statement
+Statement
 statement(void)
 {
 	if (match(TOKEN_IF)) {
