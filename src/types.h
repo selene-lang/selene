@@ -6,8 +6,10 @@
 
 extern Type types_int;
 extern Type types_bool;
+extern Type *types_pint;
+extern Type *types_pbool;
 
-void types_unify(Type *t1, Type *t2);
+void types_unify(Type **t1, Type **t2);
 Type *types_fresh_tvar(void);
 
 Scheme types_gen(Type *t);

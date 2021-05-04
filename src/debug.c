@@ -71,30 +71,32 @@ print_token(Token t)
 void
 print_type(Type t)
 {
+	printf("{");
 	switch (t.type) {
 	case T_VAR:
-		printf("{\"type variable\":\"%lc\"}", L'α' + t.tvar);
+		printf("\"type variable\":\"%lc\"", L'α' + t.tvar);
 		break;
 	case T_CON:
-		printf("{\"type constructor\":{\"name\":\"%s\",\"arguments\":[",
+		printf("\"type constructor\":{\"name\":\"%s\",\"arguments\":[",
 		       t.name);
 		for (int i = 0; i < t.arity; ++i) {
 			if (i != 0) printf(",");
 			print_type(*t.args[i]);
 		}
-		printf("]}}");
+		printf("]}");
 		break;
 	case T_FUN:
-		printf("{\"function type\":{\"arguments\":[");
+		printf("\"function type\":{\"arguments\":[");
 		for (int i = 0; i < t.arity; ++i) {
 			if (i != 0) printf(",");
 			print_type(*t.args[i]);
 		}
 		printf("],\"return\":");
 		print_type(*t.res);
-		printf("}}");
+		printf("}");
 		break;
 	}
+	printf("}");
 }
 
 void
@@ -172,8 +174,15 @@ print_statement(Statement s)
 			printf(",\"false branch\":");
 			print_block(s.elseb);
 		}
+		printf("}");
+		break;
+	case S_WHILE:
+		printf("\"while\":{\"condition\":");
+		print_expr(s.e);
+		printf(", \"body\":");
+		print_block(s.body);
+		printf("}");
 		break;
 	}
 	printf("}");
 }
-

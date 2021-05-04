@@ -47,7 +47,7 @@ static Expr fun_call(Expr fun);
 Expr expr(void);
 static Expr parse_precedence(int precedence);
 
-static Array block(void);
+Array block(void);
 static Statement ifstatement(void);
 static Statement varstatement(void);
 Statement statement(void);
@@ -187,15 +187,16 @@ number(void)
 		if (parser.previous.src[i] != '_')
 			e.number = e.number * 10 + parser.previous.src[i] - '0';
 	e.type = E_NUM;
-	e.t = &types_int;
+	e.t = types_pint;
 	return e;
 }
 
 static Expr
 var(void)
 {
-	char v[parser.previous.length + 1];
+	char *v;
 
+	v = emalloc(parser.previous.length + 1);
 	memcpy(v, parser.previous.src, parser.previous.length);
 	v[parser.previous.length] = '\0';
 	return types_inst(v, types_get_ctx(v));
@@ -251,8 +252,8 @@ binop(Expr lhs)
 		rhs = parse_precedence(prec(t));
 		break;
 	}
-	types_unify(lhs.t, rhs.t);
-	e.t = isopbool(t) ? &types_bool : lhs.t;
+	types_unify(&lhs.t, &rhs.t);
+	e.t = isopbool(t) ? types_pbool : lhs.t;
 	e.type = E_OP;
 	e.left = exprdup(lhs);
 	e.right = exprdup(rhs);
@@ -264,7 +265,7 @@ static Expr
 fun_call(Expr fun)
 {
 	Expr e, tmp;
-	Type t;
+	Type t, *p;
 
 	e.left = exprdup(fun);
 	array_init(&e.args, sizeof(Expr));
@@ -280,7 +281,8 @@ fun_call(Expr fun)
 	for (int i = 0; i < e.args.length; ++i) {
 		t.args[i] = ((Expr *)e.args.p)[i].t;
 	}
-	types_unify(&t, fun.t);
+	p = &t;
+	types_unify(&p, &fun.t);
 	e.t = t.res;
 	return e;
 }
@@ -305,7 +307,7 @@ parse_precedence(int precedence)
 	return e;
 }
 
-static Array
+Array
 block(void)
 {
 	Array a;
@@ -331,7 +333,7 @@ ifstatement(void)
 	Statement s;
 
 	s.e = expr();
-	types_unify(s.e.t, &types_int);
+	types_unify(&s.e.t, &types_pint);
 	s.body = block();
 	if (match(TOKEN_ELSE)) {
 		s.elseb = block();
@@ -346,9 +348,10 @@ varstatement(void)
 {
 	Statement s;
 	Scheme sch;
-	char v[parser.current.length + 1];
+	char *v;
 
 	expect(TOKEN_IDENT);
+	v = emalloc(parser.previous.length + 1);
 	memcpy(v, parser.previous.src, parser.previous.length);
 	v[parser.previous.length] = '\0';
 
@@ -357,7 +360,7 @@ varstatement(void)
 	types_add_var(v, sch);
 
 	s.t = sch.t;
-	s.name = strdup(v);
+	s.name = v;
 	s.type = S_VAR_DECL;
 
 	expect(TOKEN_SEMI);

@@ -6,6 +6,7 @@
 
 Expr expr(void);
 Statement statement(void);
+Array block(void);
 void parser_init(char *program);
 
 #endif

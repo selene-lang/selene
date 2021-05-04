@@ -22,10 +22,9 @@ typedef struct {
 static void unify_error(void);
 
 static int isftv(Type t, int v);
-static void bind(int v, Type t);
 static void ftv(Array *a, Type t);
 
-static Type *app_subst(Substitution s, Type *t);
+static void app_subst(Substitution s, Type **t);
 
 Array type_variables = {
 	.p = NULL,
@@ -43,6 +42,8 @@ Array context = {
 
 Type types_int = {.type = T_CON, .args = NULL, .arity = 0, .name = "int"};
 Type types_bool = {.type = T_CON, .args = NULL, .arity = 0, .name = "bool"};
+Type *types_pint = &types_int;
+Type *types_pbool = &types_bool;
 
 static void
 unify_error(void)
@@ -68,14 +69,6 @@ isftv(Type t, int v)
 }
 
 static void
-bind(int v, Type t)
-{
-	if (isftv(t, v))
-		unify_error();
-	((Type *)type_variables.p)[v] = t;
-}
-
-static void
 ftv(Array *a, Type t)
 {
 	switch (t.type) {
@@ -94,21 +87,21 @@ ftv(Array *a, Type t)
 	}
 }
 
-static Type *
-app_subst(Substitution s, Type *t)
+static void
+app_subst(Substitution s, Type **t)
 {
-	switch (t->type) {
+	switch ((*t)->type) {
 	case T_VAR:
 		for (int i = 0; i < s.length; ++i)
-			if (s.s[i].n == t->tvar)
-				return s.s[i].t;
-		return t;
+			if (s.s[i].n == (*t)->tvar)
+				*t = s.s[i].t;
+		break;
 	case T_FUN:
-		t->res = app_subst(s, t->res); /* fallthrought */
+		app_subst(s, &(*t)->res); /* fallthrought */
 	case T_CON:
 		for (int i = 0; i < s.length; ++i)
-			t->args[i] = app_subst(s, t->args[i]);
-		return t;
+			app_subst(s, (*t)->args + i);
+		break;
 	}
 }
 
@@ -130,27 +123,36 @@ types_mktcon(char *s, int arity, ...)
 }
 
 void
-types_unify(Type *t1, Type *t2)
+types_unify(Type **ppt1, Type **ppt2)
 {
-	if (t1->type == T_CON && t2->type == T_CON) {
-		if (!strcmp(t1->name, t2->name) && t1->arity == t2->arity) {
-			for (int i = 0; i < t1->arity; ++i)
-				types_unify(t1->args[i], t2->args[i]);
+	Type t1, t2;
+
+	t1 = **ppt1;
+	t2 = **ppt2;
+	if (t1.type == T_CON && t2.type == T_CON) {
+		if (!strcmp(t1.name, t2.name) && t1.arity == t2.arity) {
+			for (int i = 0; i < t1.arity; ++i)
+				types_unify(t1.args + i, t2.args + i);
+
 		} else {
 			unify_error();
 		}
-	} else if (t1->type == T_FUN && t2->type == T_FUN) {
-		if (t1->arity == t2->arity) {
-			for (int i = 0; i < t1->arity; ++i)
-				types_unify(t1->args[i], t2->args[i]);
+	} else if (t1.type == T_FUN && t2.type == T_FUN) {
+		if (t1.arity == t2.arity) {
+			for (int i = 0; i < t1.arity; ++i)
+				types_unify(t1.args + i, t2.args + i);
 		} else {
 			unify_error();
 		}
-		types_unify(t1->res, t2->res);
-	} else if (t1->type == T_VAR) {
-		bind(t1->tvar, *t2);
-	} else if (t2->type == T_VAR) {
-		bind(t2->tvar, *t1);
+		types_unify(&(*ppt1)->res, &(*ppt2)->res);
+	} else if (t1.type == T_VAR) {
+		if (isftv(t2, t1.tvar))
+			unify_error();
+		*ppt1 = *ppt2;
+	} else if (t2.type == T_VAR) {
+		if (t2.type == T_VAR)
+			unify_error();
+		*ppt2 = *ppt1;
 	} else {
 		unify_error();
 	}
@@ -194,7 +196,8 @@ types_inst(char *var, Scheme s)
 		subst.s[i].t = types_fresh_tvar();
 		e.polybind.args[i] = *subst.s[i].t;
 	}
-	e.t = app_subst(subst, s.t);
+	e.t = s.t;
+	app_subst(subst, &e.t);
 	e.name = var;
 	return e;
 }
@@ -213,7 +216,7 @@ types_add_var(char *var, Scheme s)
 {
 	Celem c;
 
-	c = (Celem){.var = var, .s = s};
+	c = (Celem){.var = strdup(var), .s = s};
 	array_write(&context, &c);
 }
 
