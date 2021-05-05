@@ -81,7 +81,7 @@ print_type(Type t)
 		       t.name);
 		for (int i = 0; i < t.arity; ++i) {
 			if (i != 0) printf(",");
-			print_type(*t.args[i]);
+			print_type(t.args[i]);
 		}
 		printf("]}");
 		break;
@@ -89,7 +89,7 @@ print_type(Type t)
 		printf("\"function type\":{\"arguments\":[");
 		for (int i = 0; i < t.arity; ++i) {
 			if (i != 0) printf(",");
-			print_type(*t.args[i]);
+			print_type(t.args[i]);
 		}
 		printf("],\"return\":");
 		print_type(*t.res);
@@ -135,7 +135,7 @@ print_expr(Expr e)
 		break;
 	}
 	printf(",\"type\":");
-	print_type(*e.t);
+	print_type(e.t);
 	printf("}");
 }
 
@@ -162,7 +162,7 @@ print_statement(Statement s)
 	case S_VAR_DECL:
 		printf("\"variable declaration\":{\"name\":\"%s\",\"type\":",
 		       s.name);
-		print_type(*s.t);
+		print_type(s.t);
 		printf("}");
 		break;
 	case S_IF:

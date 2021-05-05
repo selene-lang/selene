@@ -187,7 +187,7 @@ number(void)
 		if (parser.previous.src[i] != '_')
 			e.number = e.number * 10 + parser.previous.src[i] - '0';
 	e.type = E_NUM;
-	e.t = types_pint;
+	e.t = types_int;
 	return e;
 }
 
@@ -252,8 +252,8 @@ binop(Expr lhs)
 		rhs = parse_precedence(prec(t));
 		break;
 	}
-	types_unify(&lhs.t, &rhs.t);
-	e.t = isopbool(t) ? types_pbool : lhs.t;
+	types_unify(lhs.t, rhs.t);
+	e.t = isopbool(t) ? types_bool : lhs.t;
 	e.type = E_OP;
 	e.left = exprdup(lhs);
 	e.right = exprdup(rhs);
@@ -265,7 +265,7 @@ static Expr
 fun_call(Expr fun)
 {
 	Expr e, tmp;
-	Type t, *p;
+	Type t;
 
 	e.left = exprdup(fun);
 	array_init(&e.args, sizeof(Expr));
@@ -276,14 +276,13 @@ fun_call(Expr fun)
 	expect(TOKEN_CPAR);
 
 	t.type = T_FUN;
-	t.res = types_fresh_tvar();
+	t.res = types_get_tvar(types_fresh_tvar());
 	t.args = emalloc(e.args.length * sizeof(Type *));
 	for (int i = 0; i < e.args.length; ++i) {
 		t.args[i] = ((Expr *)e.args.p)[i].t;
 	}
-	p = &t;
-	types_unify(&p, &fun.t);
-	e.t = t.res;
+	types_unify(t, fun.t);
+	e.t = *t.res;
 	return e;
 }
 
@@ -333,7 +332,7 @@ ifstatement(void)
 	Statement s;
 
 	s.e = expr();
-	types_unify(&s.e.t, &types_pint);
+	types_unify(s.e.t, types_int);
 	s.body = block();
 	if (match(TOKEN_ELSE)) {
 		s.elseb = block();

@@ -9,7 +9,7 @@
 typedef struct {
 	struct selem {
 		int n;
-		Type *t;
+		Type t;
 	} *s;
 	int length;
 } Substitution;
@@ -23,8 +23,9 @@ static void unify_error(void);
 
 static int isftv(Type t, int v);
 static void ftv(Array *a, Type t);
+static void bind(int v, Type t);
 
-static void app_subst(Substitution s, Type **t);
+static void app_subst(Substitution s, Type *t);
 
 Array type_variables = {
 	.p = NULL,
@@ -42,8 +43,6 @@ Array context = {
 
 Type types_int = {.type = T_CON, .args = NULL, .arity = 0, .name = "int"};
 Type types_bool = {.type = T_CON, .args = NULL, .arity = 0, .name = "bool"};
-Type *types_pint = &types_int;
-Type *types_pbool = &types_bool;
 
 static void
 unify_error(void)
@@ -60,7 +59,7 @@ isftv(Type t, int v)
 			return 1; /* fallthrought */
 	case T_CON:
 		for (int i = 0; i < t.arity; ++i)
-			if (isftv(*t.args[i], v))
+			if (isftv(t.args[i], v))
 				return 1;
 		return 0;
 	case T_VAR:
@@ -82,25 +81,33 @@ ftv(Array *a, Type t)
 		ftv(a, *t.res); /* fallthrought */
 	case T_CON:
 		for (int i = 0; i < t.arity; ++i)
-			ftv(a, *t.args[i]);
+			ftv(a, t.args[i]);
 		break;
 	}
 }
 
 static void
-app_subst(Substitution s, Type **t)
+bind(int v, Type t)
 {
-	switch ((*t)->type) {
+	if (isftv(t, v))
+		unify_error();
+	((Type *)type_variables.p)[v] = t;
+}
+
+static void
+app_subst(Substitution s, Type *t)
+{
+	switch (t->type) {
 	case T_VAR:
 		for (int i = 0; i < s.length; ++i)
-			if (s.s[i].n == (*t)->tvar)
+			if (s.s[i].n == t->tvar)
 				*t = s.s[i].t;
 		break;
 	case T_FUN:
-		app_subst(s, &(*t)->res); /* fallthrought */
+		app_subst(s, t->res); /* fallthrought */
 	case T_CON:
 		for (int i = 0; i < s.length; ++i)
-			app_subst(s, (*t)->args + i);
+			app_subst(s, t->args + i);
 		break;
 	}
 }
@@ -116,49 +123,41 @@ types_mktcon(char *s, int arity, ...)
 	t.arity = arity;
 	t.args = emalloc(arity * sizeof(Type));
 	for (int i = 0; i < arity; ++i)
-		t.args[i] = va_arg(ap, Type *);
+		t.args[i] = va_arg(ap, Type);
 	va_end(ap);
 	t.name = s;
 	return t;
 }
 
 void
-types_unify(Type **ppt1, Type **ppt2)
+types_unify(Type t1, Type t2)
 {
-	Type t1, t2;
 
-	t1 = **ppt1;
-	t2 = **ppt2;
 	if (t1.type == T_CON && t2.type == T_CON) {
 		if (!strcmp(t1.name, t2.name) && t1.arity == t2.arity) {
 			for (int i = 0; i < t1.arity; ++i)
-				types_unify(t1.args + i, t2.args + i);
-
+				types_unify(t1.args[i], t2.args[i]);
 		} else {
 			unify_error();
 		}
 	} else if (t1.type == T_FUN && t2.type == T_FUN) {
 		if (t1.arity == t2.arity) {
 			for (int i = 0; i < t1.arity; ++i)
-				types_unify(t1.args + i, t2.args + i);
+				types_unify(t1.args[i], t2.args[i]);
 		} else {
 			unify_error();
 		}
-		types_unify(&(*ppt1)->res, &(*ppt2)->res);
+		types_unify(*t1.res, *t2.res);
 	} else if (t1.type == T_VAR) {
-		if (isftv(t2, t1.tvar))
-			unify_error();
-		*ppt1 = *ppt2;
+		bind(t1.tvar, t2);
 	} else if (t2.type == T_VAR) {
-		if (t2.type == T_VAR)
-			unify_error();
-		*ppt2 = *ppt1;
+		bind(t2.tvar, t1);
 	} else {
 		unify_error();
 	}
 }
 
-Type *
+Type
 types_fresh_tvar(void)
 {
 	Type t;
@@ -166,16 +165,22 @@ types_fresh_tvar(void)
 	t.tvar = type_variables.length;
 	t.type = T_VAR;
 	array_write(&type_variables, &t);
-	return (Type *)type_variables.p + type_variables.length - 1;
+	return ((Type *)type_variables.p)[type_variables.length - 1];
+}
+
+Type *
+types_get_tvar(Type t)
+{
+	return ((Type *)type_variables.p) + t.tvar;
 }
 
 Scheme
-types_gen(Type *t)
+types_gen(Type t)
 {
 	Scheme s;
 
 	array_init(&s.bindings, sizeof(int));
-	ftv(&s.bindings, *t);
+	ftv(&s.bindings, t);
 	s.t = t;
 	return s;
 }
@@ -194,7 +199,7 @@ types_inst(char *var, Scheme s)
 	for (int i = 0; i < subst.length; ++i) {
 		subst.s[i].n = ((int *)s.bindings.p)[i];
 		subst.s[i].t = types_fresh_tvar();
-		e.polybind.args[i] = *subst.s[i].t;
+		e.polybind.args[i] = subst.s[i].t;
 	}
 	e.t = s.t;
 	app_subst(subst, &e.t);
@@ -230,4 +235,33 @@ void
 types_set_ctx_len(int len)
 {
 	context.length = len;
+}
+
+void
+types_eval(Type *t)
+{
+	switch (t->type) {
+	case T_FUN:
+		types_eval(t->res); /* fallthrought */
+	case T_CON:
+		for (int i = 0; i < t->arity; ++i)
+			types_eval(t->args + i);
+		break;
+	case T_VAR: {
+		*t = ((Type *)type_variables.p)[t->tvar];
+		break;
+	}
+	}
+}
+
+void
+types_eval_expr(Expr *e)
+{
+
+}
+
+void
+types_eval_statement(Statement *s)
+{
+	
 }

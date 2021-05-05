@@ -12,7 +12,7 @@ struct type {
 	enum {
 		T_CON, T_VAR, T_FUN
 	} type;
-	Type **args;
+	Type *args;
 	Type *res;
 
 	int tvar;
@@ -23,7 +23,7 @@ struct type {
 
 typedef struct {
 	Array bindings;
-	Type *t;
+	Type t;
 } Scheme;
 
 struct expr {
@@ -43,7 +43,7 @@ struct expr {
 		O_PLUS, O_MINUS, O_MULT, O_DIV, O_NEG, O_EQU, O_GRT, O_GRTEQ,
 		O_LWR, O_LWREQ
 	} op;
-	Type *t;
+	Type t;
 };
 
 struct statement {
@@ -53,7 +53,7 @@ struct statement {
 	Array body;
 	Array elseb;
 	Expr e;
-	Type *t;
+	Type t;
 	char *name;
 };
 
