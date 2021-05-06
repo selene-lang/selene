@@ -22,5 +22,6 @@ void types_set_ctx_len(int len);
 void types_eval(Type *t);
 void types_eval_expr(Expr *e);
 void types_eval_statement(Statement *s);
+void types_eval_block(Array a);
 
 #endif

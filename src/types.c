@@ -257,11 +257,45 @@ types_eval(Type *t)
 void
 types_eval_expr(Expr *e)
 {
-
+	types_eval(&e->t);
+	switch (e->type) {
+	case E_OP:
+		types_eval_expr(e->left);
+		if (e->op != O_NEG)
+			types_eval_expr(e->right);
+		break;
+	case E_FUNCALL:
+		types_eval_expr(e->left);
+		for (int i = 0; i < e->args.length; ++i)
+			types_eval_expr((Expr *)e->args.p + i);
+		break;
+	default:
+		break;
+	}
 }
 
 void
 types_eval_statement(Statement *s)
 {
-	
+	switch (s->type) {
+	case S_EXPR:
+		types_eval_expr(&s->e);
+		break;
+	case S_IF:
+		types_eval_block(s->elseb); /* fallthrought */
+	case S_WHILE:
+		types_eval_expr(&s->e);
+		types_eval_block(s->body);
+		break;
+	case S_VAR_DECL:
+		types_eval(&s->t);
+		break;
+	}
+}
+
+void
+types_eval_block(Array a)
+{
+	for (int i = 0; i < a.length; ++i)
+		types_eval_statement((Statement *)a.p + i);
 }
