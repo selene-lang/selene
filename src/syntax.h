@@ -41,14 +41,14 @@ struct expr {
 	int number;
 	enum {
 		O_PLUS, O_MINUS, O_MULT, O_DIV, O_NEG, O_EQU, O_GRT, O_GRTEQ,
-		O_LWR, O_LWREQ
+		O_LWR, O_LWREQ, O_ASSGN
 	} op;
 	Type t;
 };
 
 struct statement {
 	enum {
-		S_EXPR, S_IF, S_WHILE, S_VAR_DECL
+		S_EXPR, S_IF, S_WHILE, S_VAR_DECL, S_RETURN
 	} type;
 	Array body;
 	Array elseb;

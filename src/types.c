@@ -203,6 +203,7 @@ types_inst(char *var, Scheme s)
 	}
 	e.t = s.t;
 	app_subst(subst, &e.t);
+	types_eval(&e.t);
 	e.name = var;
 	return e;
 }
@@ -248,7 +249,11 @@ types_eval(Type *t)
 			types_eval(t->args + i);
 		break;
 	case T_VAR: {
-		*t = ((Type *)type_variables.p)[t->tvar];
+		int prev_tvar;
+		do {
+			prev_tvar = t->tvar;
+			*t = ((Type *)type_variables.p)[t->tvar];
+		} while (t->type == T_VAR && prev_tvar != t->tvar);
 		break;
 	}
 	}
@@ -278,6 +283,7 @@ void
 types_eval_statement(Statement *s)
 {
 	switch (s->type) {
+	case S_RETURN:
 	case S_EXPR:
 		types_eval_expr(&s->e);
 		break;

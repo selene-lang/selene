@@ -20,6 +20,7 @@ op2string(int op)
 	case O_GRTEQ: return "greater/equal";
 	case O_LWR:   return "lower";
 	case O_LWREQ: return "lower/equal";
+	case O_ASSGN: return "assignment";
 	}
 	return NULL;
 }
@@ -157,6 +158,10 @@ print_statement(Statement s)
 	switch (s.type) {
 	case S_EXPR:
 		printf("\"expr\":");
+		print_expr(s.e);
+		break;
+	case S_RETURN:
+		printf("\"return\":");
 		print_expr(s.e);
 		break;
 	case S_VAR_DECL:

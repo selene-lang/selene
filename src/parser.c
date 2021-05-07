@@ -49,7 +49,9 @@ static Expr parse_precedence(int precedence);
 
 Array block(void);
 static Statement ifstatement(void);
+static Statement whilestatement(void);
 static Statement varstatement(void);
+static Statement returnstatement(void);
 Statement statement(void);
 
 static Parser parser;
@@ -68,6 +70,7 @@ static const ParseRule rules[TOKEN_EOF + 1] = {
 };
 
 static const int tok2op[TOKEN_EOF + 1] = {
+	[TOKEN_ASSIGN]    = O_ASSGN,
 	[TOKEN_EQUAL]     = O_EQU,
 	[TOKEN_GREATER]   = O_GRT,
 	[TOKEN_GREATEREQ] = O_GRTEQ,
@@ -253,6 +256,8 @@ binop(Expr lhs)
 		break;
 	}
 	types_unify(lhs.t, rhs.t);
+	types_eval_expr(&lhs);
+	types_eval_expr(&rhs);
 	e.t = isopbool(t) ? types_bool : lhs.t;
 	e.type = E_OP;
 	e.left = exprdup(lhs);
@@ -322,6 +327,7 @@ block(void)
 		s = statement();
 		array_write(&a, &s);
 	}
+	types_eval_block(a);
 	types_set_ctx_len(ctx_len);
 	return a;
 }
@@ -332,6 +338,7 @@ ifstatement(void)
 	Statement s;
 
 	s.e = expr();
+	s.type = S_IF;
 	types_unify(s.e.t, types_int);
 	s.body = block();
 	if (match(TOKEN_ELSE)) {
@@ -339,6 +346,18 @@ ifstatement(void)
 	} else {
 		array_init(&s.elseb, sizeof(Statement));
 	}
+	return s;
+}
+
+static Statement
+whilestatement(void)
+{
+	Statement s;
+
+	s.e = expr();
+	s.type = S_WHILE;
+	types_unify(s.e.t, types_int);
+	s.body = block();
 	return s;
 }
 
@@ -366,13 +385,27 @@ varstatement(void)
 	return s;
 }
 
+static Statement
+returnstatement(void)
+{
+	Statement s;
+
+	s.e = expr();
+	s.type = S_RETURN;
+	return s;
+}
+
 Statement
 statement(void)
 {
 	if (match(TOKEN_IF)) {
 		return ifstatement();
+	} else if (match(TOKEN_WHILE)) {
+		return whilestatement();
 	} else if (match(TOKEN_VAR)) {
 		return varstatement();
+	} else if (match(TOKEN_RETURN)) {
+		return returnstatement();
 	} else {
 		Statement s = {.type = S_EXPR, .e = expr()};
 		expect(TOKEN_SEMI);
