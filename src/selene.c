@@ -5,7 +5,7 @@
 #include "lexer.h"
 #include "parser.h"
 
-char *program = "{var a;var b;a+b;a+1; if 1 {a+b;} else {a+b;} while 1 {a=a+1;}}";
+char *program = "{var a;var b;a+b;a+1; if 1 {a+b;} else {a+b;} while 1 {a=a+1;} return 1;}";
 
 int
 main(int argc, char **argv)

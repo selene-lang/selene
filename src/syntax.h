@@ -57,4 +57,11 @@ struct statement {
 	char *name;
 };
 
+typedef struct {
+	Statement *body;
+	int bodylen;
+	Scheme s;
+	char *name;
+} Function;
+
 #endif

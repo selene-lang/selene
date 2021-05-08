@@ -30,6 +30,7 @@ static void next_token(void);
 static void expect(enum token t);
 static int match(enum token t);
 static enum token peek(void);
+static char *ident(void);
 static Expr *exprdup(Expr e);
 
 static int isunary(enum token t);
@@ -44,7 +45,7 @@ static Expr unary(void);
 static Expr simple_expr(void);
 static Expr binop(Expr lhs);
 static Expr fun_call(Expr fun);
-Expr expr(void);
+static Expr expr(void);
 static Expr parse_precedence(int precedence);
 
 Array block(void);
@@ -52,7 +53,9 @@ static Statement ifstatement(void);
 static Statement whilestatement(void);
 static Statement varstatement(void);
 static Statement returnstatement(void);
-Statement statement(void);
+static Statement statement(void);
+
+static Function parser_function(void);
 
 static Parser parser;
 static const ParseRule rules[TOKEN_EOF + 1] = {
@@ -120,6 +123,18 @@ static enum token
 peek(void)
 {
 	return parser.current.t;
+}
+
+static char *
+ident(void)
+{
+	char *v;
+
+	expect(TOKEN_IDENT);
+	v = emalloc(parser.previous.length + 1);
+	memcpy(v, parser.previous.src, parser.previous.length);
+	v[parser.previous.length] = '\0';
+	return v;
 }
 
 static Expr *
@@ -274,24 +289,23 @@ fun_call(Expr fun)
 
 	e.left = exprdup(fun);
 	array_init(&e.args, sizeof(Expr));
-	do {
+	while (!match(TOKEN_CPAR)) {
 		tmp = expr();
 		array_write(&e.args, &tmp);
-	} while (match(TOKEN_COMMA));
-	expect(TOKEN_CPAR);
+		expect(TOKEN_COMMA);
+	}
 
 	t.type = T_FUN;
 	t.res = types_get_tvar(types_fresh_tvar());
-	t.args = emalloc(e.args.length * sizeof(Type *));
-	for (int i = 0; i < e.args.length; ++i) {
+	t.args = emalloc(e.args.length * sizeof(Type));
+	for (int i = 0; i < e.args.length; ++i)
 		t.args[i] = ((Expr *)e.args.p)[i].t;
-	}
 	types_unify(t, fun.t);
 	e.t = *t.res;
 	return e;
 }
 
-Expr
+static Expr
 expr(void)
 {
 	return parse_precedence(P_ASSIGN);
@@ -366,20 +380,15 @@ varstatement(void)
 {
 	Statement s;
 	Scheme sch;
-	char *v;
 
-	expect(TOKEN_IDENT);
-	v = emalloc(parser.previous.length + 1);
-	memcpy(v, parser.previous.src, parser.previous.length);
-	v[parser.previous.length] = '\0';
+	s.name = ident();
+	s.type = S_VAR_DECL;
 
 	sch.t = types_fresh_tvar();
 	array_init(&sch.bindings, sizeof(int));
-	types_add_var(v, sch);
+	types_add_var(s.name, sch);
 
 	s.t = sch.t;
-	s.name = v;
-	s.type = S_VAR_DECL;
 
 	expect(TOKEN_SEMI);
 	return s;
@@ -392,10 +401,11 @@ returnstatement(void)
 
 	s.e = expr();
 	s.type = S_RETURN;
+	expect(TOKEN_SEMI);
 	return s;
 }
 
-Statement
+static Statement
 statement(void)
 {
 	if (match(TOKEN_IF)) {
@@ -411,4 +421,34 @@ statement(void)
 		expect(TOKEN_SEMI);
 		return s;
 	}
+}
+
+static Function
+parser_function(void)
+{
+	int clen;
+	Scheme s;
+	Function f;
+	Array a, targs;
+
+	clen = types_get_ctx_len();
+	array_init(&s.bindings, sizeof(int));
+	array_init(&targs, sizeof(Type));
+
+	f.name = ident();
+
+	expect(TOKEN_OPAR);
+	while (!match(TOKEN_CPAR)) {
+		s.t = types_fresh_tvar();
+		array_write(&targs, &s.t);
+		types_add_var(ident(), s);
+	}
+
+	a = block();
+	f.body = a.p;
+	f.bodylen = a.length;
+
+	types_set_ctx_len(clen);
+
+	return f;
 }
