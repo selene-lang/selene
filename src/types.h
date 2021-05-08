@@ -6,6 +6,7 @@
 
 extern Type types_int;
 extern Type types_bool;
+extern Type types_void;
 
 void types_unify(Type t1, Type t2);
 Type types_fresh_tvar(void);

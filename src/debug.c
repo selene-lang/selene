@@ -101,6 +101,19 @@ print_type(Type t)
 }
 
 void
+print_scheme(Scheme s)
+{
+	printf("{\"bindings\":[");
+	for (int i = 0; i < s.bindings.length; ++i) {
+		if (i != 0) printf(",");
+		printf("\"%lc\"", L'α' + ((int *)s.bindings.p)[i]);
+	}
+	printf("],\"type\":");
+	print_type(s.t);
+	printf("}");
+}
+
+void
 print_expr(Expr e)
 {
 	printf("{");
@@ -190,4 +203,17 @@ print_statement(Statement s)
 		break;
 	}
 	printf("}");
+}
+
+void
+print_function(Function f)
+{
+	printf("{\"name\":\"%s\", \"scheme\":", f.name);
+	print_scheme(f.s);
+	printf(",\"body\":[");
+	for (int i = 0; i < f.bodylen; ++i) {
+		if (i != 0) printf(",");
+		print_statement(f.body[i]);
+	}
+	printf("]}");
 }

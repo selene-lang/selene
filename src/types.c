@@ -43,6 +43,7 @@ Array context = {
 
 Type types_int = {.type = T_CON, .args = NULL, .arity = 0, .name = "int"};
 Type types_bool = {.type = T_CON, .args = NULL, .arity = 0, .name = "bool"};
+Type types_void = {.type = T_CON, .args = NULL, .arity = 0, .name = "void"};
 
 static void
 unify_error(void)
@@ -110,23 +111,6 @@ app_subst(Substitution s, Type *t)
 			app_subst(s, t->args + i);
 		break;
 	}
-}
-
-Type
-types_mktcon(char *s, int arity, ...)
-{
-	Type t;
-	va_list ap;
-
-	va_start(ap, arity);
-	t.type = T_CON;
-	t.arity = arity;
-	t.args = emalloc(arity * sizeof(Type));
-	for (int i = 0; i < arity; ++i)
-		t.args[i] = va_arg(ap, Type);
-	va_end(ap);
-	t.name = s;
-	return t;
 }
 
 void

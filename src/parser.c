@@ -48,14 +48,15 @@ static Expr fun_call(Expr fun);
 static Expr expr(void);
 static Expr parse_precedence(int precedence);
 
-Array block(void);
+static Array block(void);
 static Statement ifstatement(void);
 static Statement whilestatement(void);
 static Statement varstatement(void);
 static Statement returnstatement(void);
 static Statement statement(void);
 
-static Function parser_function(void);
+static void block_ret_type(Array a, Type t);
+static Function function(void);
 
 static Parser parser;
 static const ParseRule rules[TOKEN_EOF + 1] = {
@@ -325,7 +326,7 @@ parse_precedence(int precedence)
 	return e;
 }
 
-Array
+static Array
 block(void)
 {
 	Array a;
@@ -423,13 +424,39 @@ statement(void)
 	}
 }
 
+static void
+block_ret_type(Array a, Type t)
+{
+	Statement *p;
+
+	p = a.p;
+	for (int i = 0; i < a.length; ++i) {
+		switch (p[i].type) {
+		case S_EXPR:
+		case S_VAR_DECL:
+			break;
+		case S_IF:
+			block_ret_type(p[i].elseb, t); /* fallthrought */
+			types_eval(&t);
+		case S_WHILE:
+			block_ret_type(p[i].body, t);
+			break;
+		case S_RETURN:
+			types_unify(t, p[i].e.t);
+			break;
+		}
+		types_eval(&t);
+	}
+}
+
 static Function
-parser_function(void)
+function(void)
 {
 	int clen;
 	Scheme s;
 	Function f;
 	Array a, targs;
+	Type ret, buf, tfun;
 
 	clen = types_get_ctx_len();
 	array_init(&s.bindings, sizeof(int));
@@ -448,7 +475,31 @@ parser_function(void)
 	f.body = a.p;
 	f.bodylen = a.length;
 
+	ret = types_fresh_tvar();
+	buf = ret;
+	block_ret_type(a, ret);
+	types_eval(&ret);
+
+	if (ret.type == T_VAR && ret.tvar == buf.tvar)
+		tfun.res = &types_void;
+	else
+		tfun.res = types_get_tvar(buf);
+
+	tfun.type = T_FUN;
+	tfun.arity = targs.length;
+	tfun.args = erealloc(targs.p, targs.capacity * sizeof(Type),
+	                     targs.length * sizeof(Type));
+
+	types_eval(&tfun);
+	f.s = types_gen(tfun);
 	types_set_ctx_len(clen);
 
 	return f;
+}
+
+Function
+top_level(void)
+{
+	expect(TOKEN_FUN);
+	return function();
 }
