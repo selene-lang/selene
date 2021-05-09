@@ -5,7 +5,7 @@
 #include "lexer.h"
 #include "parser.h"
 
-char *program = "fun id(x){if 1 {return 1;}}";
+char *program = "fun add(a, b){return a + b + 1;}";
 
 int
 main(int argc, char **argv)

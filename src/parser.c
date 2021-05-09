@@ -290,11 +290,11 @@ fun_call(Expr fun)
 
 	e.left = exprdup(fun);
 	array_init(&e.args, sizeof(Expr));
-	while (!match(TOKEN_CPAR)) {
+	do {
 		tmp = expr();
 		array_write(&e.args, &tmp);
-		expect(TOKEN_COMMA);
-	}
+	} while (match(TOKEN_COMMA));
+	expect(TOKEN_CPAR);
 
 	t.type = T_FUN;
 	t.res = types_get_tvar(types_fresh_tvar());
@@ -369,10 +369,8 @@ whilestatement(void)
 {
 	Statement s;
 
-	s.e = expr();
-	s.type = S_WHILE;
+	s = (Statement){.e = expr(), .type = S_WHILE, .body = block()};
 	types_unify(s.e.t, types_int);
-	s.body = block();
 	return s;
 }
 
@@ -400,8 +398,7 @@ returnstatement(void)
 {
 	Statement s;
 
-	s.e = expr();
-	s.type = S_RETURN;
+	s = (Statement){.e = expr(), .type = S_RETURN};
 	expect(TOKEN_SEMI);
 	return s;
 }
@@ -465,11 +462,12 @@ function(void)
 	f.name = ident();
 
 	expect(TOKEN_OPAR);
-	while (!match(TOKEN_CPAR)) {
+	do {
 		s.t = types_fresh_tvar();
 		array_write(&targs, &s.t);
 		types_add_var(ident(), s);
-	}
+	} while (match(TOKEN_COMMA));
+	expect(TOKEN_CPAR);
 
 	a = block();
 	f.body = a.p;
