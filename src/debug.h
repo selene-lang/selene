@@ -12,5 +12,6 @@ void print_expr(Expr e);
 void print_block(Array a);
 void print_statement(Statement s);
 void print_function(Function f);
+void print_program(Array prog);
 
 #endif

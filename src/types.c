@@ -27,6 +27,8 @@ static void bind(int v, Type t);
 
 static void app_subst(Substitution s, Type *t);
 
+static Type type_dup(Type t);
+
 Array type_variables = {
 	.p = NULL,
 	.esize = sizeof(Type),
@@ -107,9 +109,39 @@ app_subst(Substitution s, Type *t)
 	case T_FUN:
 		app_subst(s, t->res); /* fallthrought */
 	case T_CON:
-		for (int i = 0; i < s.length; ++i)
+		for (int i = 0; i < t->arity; ++i)
 			app_subst(s, t->args + i);
 		break;
+	}
+}
+
+static Type
+type_dup(Type t)
+{
+	switch (t.type) {
+	case T_VAR:
+		return t;
+	case T_CON: {
+		Type t2;
+		t2.type = T_CON;
+		t2.name = strdup(t.name);
+		t2.arity = t.arity;
+		t2.args = emalloc(t.arity * sizeof(Type));
+		for (int i = 0; i < t.arity; ++i)
+			t2.args[i] = type_dup(t.args[i]);
+		return t2;
+	}
+	case T_FUN: {
+		Type t2;
+		t2.type = T_FUN;
+		t2.res = emalloc(sizeof(Type));
+		*t2.res = type_dup(*t.res);
+		t2.arity = t.arity;
+		t2.args = emalloc(t.arity * sizeof(Type));
+		for (int i = 0; i < t.arity; ++i)
+			t2.args[i] = type_dup(t.args[i]);
+		return t2;
+	}
 	}
 }
 
@@ -185,7 +217,7 @@ types_inst(char *var, Scheme s)
 		subst.s[i].t = types_fresh_tvar();
 		e.polybind.args[i] = subst.s[i].t;
 	}
-	e.t = s.t;
+	e.t = type_dup(s.t);
 	app_subst(subst, &e.t);
 	types_eval(&e.t);
 	e.name = var;
@@ -257,6 +289,10 @@ types_eval_expr(Expr *e)
 		types_eval_expr(e->left);
 		for (int i = 0; i < e->args.length; ++i)
 			types_eval_expr((Expr *)e->args.p + i);
+		break;
+	case E_VAR:
+		for (int i = 0; i < e->polybind.len; ++i)
+			types_eval(e->polybind.args + i);
 		break;
 	default:
 		break;

@@ -6,6 +6,6 @@
 
 void parser_init(char *program);
 
-Function top_level(void);
+Array parser_program(void);
 
 #endif

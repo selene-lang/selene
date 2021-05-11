@@ -57,6 +57,7 @@ static Statement statement(void);
 
 static void block_ret_type(Array a, Type t);
 static Function function(void);
+static Function top_level(void);
 
 static Parser parser;
 static const ParseRule rules[TOKEN_EOF + 1] = {
@@ -282,6 +283,8 @@ binop(Expr lhs)
 	return e;
 }
 
+#include "debug.h"
+
 static Expr
 fun_call(Expr fun)
 {
@@ -289,20 +292,27 @@ fun_call(Expr fun)
 	Type t;
 
 	e.left = exprdup(fun);
+	e.type = E_FUNCALL;
 	array_init(&e.args, sizeof(Expr));
-	do {
-		tmp = expr();
-		array_write(&e.args, &tmp);
-	} while (match(TOKEN_COMMA));
-	expect(TOKEN_CPAR);
+	if (!match(TOKEN_CPAR)) {
+		do {
+			tmp = expr();
+			array_write(&e.args, &tmp);
+		} while (match(TOKEN_COMMA));
+		expect(TOKEN_CPAR);
+	}
 
 	t.type = T_FUN;
 	t.res = types_get_tvar(types_fresh_tvar());
+	t.arity = e.args.length;
 	t.args = emalloc(e.args.length * sizeof(Type));
 	for (int i = 0; i < e.args.length; ++i)
 		t.args[i] = ((Expr *)e.args.p)[i].t;
+
+	print_type(t);
 	types_unify(t, fun.t);
 	e.t = *t.res;
+	types_eval_expr(&e);
 	return e;
 }
 
@@ -462,12 +472,14 @@ function(void)
 	f.name = ident();
 
 	expect(TOKEN_OPAR);
-	do {
-		s.t = types_fresh_tvar();
-		array_write(&targs, &s.t);
-		types_add_var(ident(), s);
-	} while (match(TOKEN_COMMA));
-	expect(TOKEN_CPAR);
+	if (!match(TOKEN_CPAR)) {
+		do {
+			s.t = types_fresh_tvar();
+			array_write(&targs, &s.t);
+			types_add_var(ident(), s);
+		} while (match(TOKEN_COMMA));
+		expect(TOKEN_CPAR);
+	}
 
 	a = block();
 	f.body = a.p;
@@ -495,9 +507,24 @@ function(void)
 	return f;
 }
 
-Function
+static Function
 top_level(void)
 {
 	expect(TOKEN_FUN);
 	return function();
+}
+
+Array
+parser_program(void)
+{
+	Array a;
+	Function f;
+
+	array_init(&a, sizeof(Function));
+	while (!match(TOKEN_EOF)) {
+		f = top_level();
+		types_add_var(f.name, f.s);
+		array_write(&a, &f);
+	}
+	return a;
 }

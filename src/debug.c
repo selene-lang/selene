@@ -217,3 +217,14 @@ print_function(Function f)
 	}
 	printf("]}");
 }
+
+void
+print_program(Array prog)
+{
+	printf("[");
+	for (int i = 0; i < prog.length; ++i) {
+		if (i != 0) printf(",");
+		print_function(((Function *)prog.p)[i]);
+	}
+	printf("]");
+}
