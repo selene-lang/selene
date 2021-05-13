@@ -283,8 +283,6 @@ binop(Expr lhs)
 	return e;
 }
 
-#include "debug.h"
-
 static Expr
 fun_call(Expr fun)
 {
@@ -309,7 +307,6 @@ fun_call(Expr fun)
 	for (int i = 0; i < e.args.length; ++i)
 		t.args[i] = ((Expr *)e.args.p)[i].t;
 
-	print_type(t);
 	types_unify(t, fun.t);
 	e.t = *t.res;
 	types_eval_expr(&e);

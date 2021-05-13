@@ -62,8 +62,7 @@ isftv(Type t, int v)
 			return 1; /* fallthrought */
 	case T_CON:
 		for (int i = 0; i < t.arity; ++i)
-			if (isftv(t.args[i], v))
-				return 1;
+			if (isftv(t.args[i], v)) return 1;
 		return 0;
 	case T_VAR:
 		return t.tvar == v;
@@ -76,8 +75,7 @@ ftv(Array *a, Type t)
 	switch (t.type) {
 	case T_VAR:
 		for (int i = 0; i < a->length; ++i)
-			if (((int *)a->p)[i] == t.tvar)
-				return;
+			if (((int *)a->p)[i] == t.tvar) return;
 		array_write(a, &t.tvar);
 		break;
 	case T_FUN:
@@ -103,8 +101,7 @@ app_subst(Substitution s, Type *t)
 	switch (t->type) {
 	case T_VAR:
 		for (int i = 0; i < s.length; ++i)
-			if (s.s[i].n == t->tvar)
-				*t = s.s[i].t;
+			if (s.s[i].n == t->tvar) *t = s.s[i].t;
 		break;
 	case T_FUN:
 		app_subst(s, t->res); /* fallthrought */
@@ -150,19 +147,15 @@ types_unify(Type t1, Type t2)
 {
 
 	if (t1.type == T_CON && t2.type == T_CON) {
-		if (!strcmp(t1.name, t2.name) && t1.arity == t2.arity) {
-			for (int i = 0; i < t1.arity; ++i)
-				types_unify(t1.args[i], t2.args[i]);
-		} else {
+		if (strcmp(t1.name, t2.name) && t1.arity == t2.arity)
 			unify_error();
-		}
+		for (int i = 0; i < t1.arity; ++i)
+			types_unify(t1.args[i], t2.args[i]);
 	} else if (t1.type == T_FUN && t2.type == T_FUN) {
-		if (t1.arity == t2.arity) {
-			for (int i = 0; i < t1.arity; ++i)
-				types_unify(t1.args[i], t2.args[i]);
-		} else {
+		if (t1.arity != t2.arity)
 			unify_error();
-		}
+		for (int i = 0; i < t1.arity; ++i)
+			types_unify(t1.args[i], t2.args[i]);
 		types_unify(*t1.res, *t2.res);
 	} else if (t1.type == T_VAR) {
 		bind(t1.tvar, t2);

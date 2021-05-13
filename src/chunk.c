@@ -3,19 +3,17 @@
 #include "array.h"
 #include "chunk.h"
 #include "memory.h"
-#include "value.h"
 
 void
 chunk_init(Chunk *chunk)
 {
-	array_init(&chunk->code, sizeof(u8));
-	array_init(&chunk->values, sizeof(Value));
+	array_init(&chunk->code, sizeof(Instruction));
 }
 
 void
-chunk_write(Chunk *chunk, u8 byte)
+chunk_write(Chunk *chunk, Instruction i)
 {
-
+	array_write(&chunk->code, &i);
 }
 
 void

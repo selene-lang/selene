@@ -1,7 +1,7 @@
 CC ?= cc
 CFLAGS += -O2 -Wall
 INCLUDES = -I.
-SRCS = debug.c parser.c lexer.c array.c memory.c vm.c types.c selene.c
+SRCS = debug.c parser.c lexer.c array.c memory.c vm.c types.c selene.c compile.c
 OBJS = $(SRCS:.c=.o)
 TARGET = selene
 
