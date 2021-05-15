@@ -232,6 +232,7 @@ unary(void)
 	e.t = arg.t;
 	e.op = O_NEG;
 	e.left = exprdup(arg);
+	e.right = NULL;
 	return e;
 }
 
