@@ -51,18 +51,24 @@ compile_op(Expr *lhs, Expr *rhs, int op, Chunk *c)
 
 	l = compile_expr(*lhs, c);
 	o = new_reg();
-	if (rhs != NULL)
+	i.a = o;
+	i.b = l;
+	if (rhs != NULL) {
 		r = compile_expr(*rhs, c);
+		i.c = r;
+	}
 	switch (op) {
 	case O_PLUS:
-		i.a = o;
-		i.b = l;
-		i.c = r;
 		i.op = OP_ADDI;
-		free_reg(l);
-		free_reg(r);
+		break;
+	case O_MINUS:
+		i.op = OP_SUBI;
 		break;
 	}
+	free_reg(l);
+	if (rhs != NULL)
+		free_reg(r);
+
 	add_instruction(i, c);
 	return o;
 }
