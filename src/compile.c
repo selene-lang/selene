@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "common.h"
 
 #include "compile.h"
@@ -5,17 +7,22 @@
 #include "chunk.h"
 #include "syntax.h"
 
-static void add_instruction(Instruction i, Chunk *c);
+static void add_instruction(Instruction i, CompileContext *c);
 static u8 new_reg(CompileContext *c);
 static void free_reg(u8 reg, CompileContext *c);
 static u8 add_const_int(int n, CompileContext *c);
+static int cjmp(u8 r, CompileContext *c);
+
+static u8 find_var(char *var, CompileContext *c);
 static u8 compile_op(Expr *lhs, Expr *rhs, int op, CompileContext *c);
 static u8 compile_expr(Expr e, CompileContext *c);
+static void compile_statement(Statement s, CompileContext *c);
+static Chunk *compile_function(Function f);
 
 static void
-add_instruction(Instruction i, Chunk *c)
+add_instruction(Instruction i, CompileContext *c)
 {
-	array_write(&c->code, &i);
+	array_write(&c->chunk->code, &i);
 }
 
 static u8
@@ -41,6 +48,25 @@ add_const_int(int n, CompileContext *c)
 {
 	array_write(&c->chunk->values, &n);
 	return c->chunk->values.length - 1;
+}
+
+static int
+cjmp(u8 r, CompileContext *c)
+{
+	Instruction i;
+
+	i.op = OP_CJMP;
+	i.a = r;
+	add_instruction(i, c);
+}
+
+static u8
+find_var(char *var, CompileContext *c)
+{
+	for (int i = 0; i < 128; ++i)
+		if(!strcmp(var, c->var[i].name))
+			return i + 128;
+	exit(1);
 }
 
 static u8
@@ -81,7 +107,27 @@ compile_expr(Expr e, CompileContext *c)
 		return add_const_int(e.number, c);
 	case E_OP:
 		return compile_op(e.left, e.right, e.op, c);
+	case E_VAR:
+		return find_var(e.name, c);
 	default:
 		return -1;
 	}
+}
+
+static void
+compile_statement(Statement s, CompileContext *c)
+{
+	switch (s.type) {
+	case S_IF: {
+		u8 r = compile_expr(s.e, c);
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+static Chunk *
+compile_function(Function f)
+{
 }
