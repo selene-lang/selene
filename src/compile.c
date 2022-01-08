@@ -7,23 +7,17 @@
 #include "chunk.h"
 #include "syntax.h"
 
-static void add_instruction(Instruction i, CompileContext *c);
 static u8 new_reg(CompileContext *c);
 static void free_reg(u8 reg, CompileContext *c);
 static u8 add_const_int(int n, CompileContext *c);
-static int cjmp(u8 r, CompileContext *c);
+static int jmp(u8 r, OpCode op, CompileContext *c);
 
 static u8 find_var(char *var, CompileContext *c);
 static u8 compile_op(Expr *lhs, Expr *rhs, int op, CompileContext *c);
 static u8 compile_expr(Expr e, CompileContext *c);
 static void compile_statement(Statement s, CompileContext *c);
+static void compile_body(Array a, CompileContext *c);
 static Chunk *compile_function(Function f);
-
-static void
-add_instruction(Instruction i, CompileContext *c)
-{
-	array_write(&c->chunk->code, &i);
-}
 
 static u8
 new_reg(CompileContext *c)
@@ -51,13 +45,19 @@ add_const_int(int n, CompileContext *c)
 }
 
 static int
-cjmp(u8 r, CompileContext *c)
+jmp(u8 r, OpCode op, CompileContext *c)
 {
 	Instruction i;
 
-	i.op = OP_CJMP;
+	i.op = op;
 	i.a = r;
-	add_instruction(i, c);
+	chunk_write(c->chunk, i);
+
+	/* Leave room for the address. */
+	chunk_write(c->chunk, (Instruction){0});
+	chunk_write(c->chunk, (Instruction){0});
+
+	return c->chunk->code.length - 2;
 }
 
 static u8
@@ -95,7 +95,7 @@ compile_op(Expr *lhs, Expr *rhs, int op, CompileContext *c)
 	if (rhs != NULL)
 		free_reg(r, c);
 
-	add_instruction(i, c->chunk);
+	chunk_write(c->chunk, i);
 	return o;
 }
 
@@ -120,11 +120,23 @@ compile_statement(Statement s, CompileContext *c)
 	switch (s.type) {
 	case S_IF: {
 		u8 r = compile_expr(s.e, c);
+		int if_addr = jmp(r, OP_CJMP, c);
+		if (s.elseb.length != 0) {
+			compile_body(s.elseb, c);
+		}
+		int end_addr = jmp(0, OP_UJMP, c);
 		break;
 	}
 	default:
 		break;
 	}
+}
+
+static void
+compile_body(Array a, CompileContext *c)
+{
+	for (int i = 0; i < a.length; ++i)
+		compile_statement(((Statement *)a.p)[i], c);
 }
 
 static Chunk *
