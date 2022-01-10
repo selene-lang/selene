@@ -125,8 +125,14 @@ compile_statement(Statement s, CompileContext *c)
 			compile_body(s.elseb, c);
 		}
 		int end_addr = jmp(0, OP_UJMP, c);
+		chunk_write_addr(c->chunk, if_addr, c->chunk->code.length);
+		compile_body(s.body, c);
+		chunk_write_addr(c->chunk, end_addr, c->chunk->code.length);
 		break;
 	}
+	case S_EXPR:
+		compile_expr(s.e, c);
+		break;
 	default:
 		break;
 	}

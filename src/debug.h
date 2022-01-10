@@ -2,6 +2,7 @@
 #define __DEBUG_H_
 
 #include "common.h"
+#include "chunk.h"
 #include "lexer.h"
 #include "syntax.h"
 
@@ -13,5 +14,7 @@ void print_block(Array a);
 void print_statement(Statement s);
 void print_function(Function f);
 void print_program(Array prog);
+void print_opcode(OpCode op);
+void print_chunk(Chunk c);
 
 #endif

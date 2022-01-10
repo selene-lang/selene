@@ -19,9 +19,9 @@ chunk_write(Chunk *chunk, Instruction i)
 }
 
 void
-chunk_write_addr(Chunk *chunk, int i, u16 addr)
+chunk_write_addr(Chunk *chunk, int i, u32 addr)
 {
-	((u16*)chunk->code.p)[i] = addr;
+	((u32*)chunk->code.p)[i] = addr;
 }
 
 void

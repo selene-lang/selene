@@ -22,7 +22,7 @@ typedef struct {
 
 void chunk_init(Chunk *);
 void chunk_write(Chunk *, Instruction);
-void chunk_write_addr(Chunk *, int, u16);
+void chunk_write_addr(Chunk *, int, u32);
 void chunk_free(Chunk *);
 
 #endif

@@ -4,26 +4,19 @@
 #include "lexer.h"
 #include "syntax.h"
 
-static char *op2string(int op);
-
-static char *
-op2string(int op)
-{
-	switch (op) {
-	case O_PLUS:  return "plus";
-	case O_MINUS: return "minus";
-	case O_MULT:  return "multiplication";
-	case O_DIV:   return "division";
-	case O_NEG:   return "negation";
-	case O_EQU:   return "equal";
-	case O_GRT:   return "greater";
-	case O_GRTEQ: return "greater/equal";
-	case O_LWR:   return "lower";
-	case O_LWREQ: return "lower/equal";
-	case O_ASSGN: return "assignment";
-	}
-	return NULL;
-}
+static char *op2string[] = {
+	[O_PLUS]  = "plus",
+	[O_MINUS] = "minus",
+	[O_MULT]  = "multiplication",
+	[O_DIV]   = "division",
+	[O_NEG]   = "negation",
+	[O_EQU]   = "equal",
+	[O_GRT]   = "greater",
+	[O_GRTEQ] = "greater/equal",
+	[O_LWR]   = "lower",
+	[O_LWREQ] = "lower/equal",
+	[O_ASSGN] = "assignment"
+};
 
 void
 print_token(Token t)
@@ -141,7 +134,7 @@ print_expr(Expr e)
 		break;
 	case E_OP:
 		printf("\"operator\":{\"name\":\"%s\",\"lhs\":",
-		       op2string(e.op));
+		       op2string[e.op]);
 		print_expr(*e.left);
 		printf(",\"rhs\":");
 		print_expr(*e.right);
@@ -227,4 +220,16 @@ print_program(Array prog)
 		print_function(((Function *)prog.p)[i]);
 	}
 	printf("]");
+}
+
+void
+print_opcode(OpCode op)
+{
+
+}
+
+void
+print_chunk(Chunk c)
+{
+
 }
