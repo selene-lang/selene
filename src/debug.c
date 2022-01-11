@@ -18,6 +18,21 @@ static char *op2string[] = {
 	[O_ASSGN] = "assignment"
 };
 
+static struct {
+	char *op;
+	int narg;
+	u8 extra_arg;
+} instruction2string[] = {
+	[OP_RET]  = {"ret", 0, 0},
+	[OP_ADDI] = {"addi", 3, 0},
+	[OP_SUBI] = {"subi", 3, 0},
+	[OP_MULTI] = {"multi", 3, 0},
+	[OP_DIVI] = {"divi", 3, 0},
+	[OP_EQUI] = {"equi", 3, 0},
+	[OP_CJMP] = {"cjmp", 1, 1},
+	[OP_UJMP] = {"ujmp", 0, 1},
+};
+
 void
 print_token(Token t)
 {
@@ -223,9 +238,9 @@ print_program(Array prog)
 }
 
 void
-print_opcode(OpCode op)
+print_instruction(Instruction i)
 {
-
+	
 }
 
 void
