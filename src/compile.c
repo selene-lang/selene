@@ -11,6 +11,7 @@ static u8 new_reg(CompileContext *c);
 static void free_reg(u8 reg, CompileContext *c);
 static u8 add_const_int(int n, CompileContext *c);
 static int jmp(u8 r, OpCode op, CompileContext *c);
+static int jmp_addr(u8 r, OpCode op, int addr, CompileContext *c);
 
 static u8 find_var(char *var, CompileContext *c);
 static u8 compile_op(Expr *lhs, Expr *rhs, int op, CompileContext *c);
@@ -48,16 +49,32 @@ static int
 jmp(u8 r, OpCode op, CompileContext *c)
 {
 	Instruction i;
+	int index;
 
 	i.op = op;
 	i.a = r;
 	chunk_write(c->chunk, i);
 
 	/* Leave room for the address. */
-	chunk_write(c->chunk, (Instruction){0});
-	chunk_write(c->chunk, (Instruction){0});
+	index = c->chunk->code.length - 1;
+	chunk_write_addr(c->chunk, index, 0);
 
-	return c->chunk->code.length - 2;
+	return index - 4;
+}
+
+static int
+jmp_addr(u8 r, OpCode op, int addr, CompileContext *c)
+{
+	Instruction i;
+	int index;
+
+	i.op = op;
+	i.a = r;
+	chunk_write(c->chunk, i);
+	index = c->chunk->code.length - 1;
+	chunk_write_addr(c->chunk, index, addr);
+
+	return index - 4;
 }
 
 static u8
@@ -127,6 +144,15 @@ compile_statement(Statement s, CompileContext *c)
 		int end_addr = jmp(0, OP_UJMP, c);
 		chunk_write_addr(c->chunk, if_addr, c->chunk->code.length);
 		compile_body(s.body, c);
+		chunk_write_addr(c->chunk, end_addr, c->chunk->code.length);
+		break;
+	}
+	case S_WHILE: {
+		int begin = c->chunk->code.length;
+		u8 r = compile_expr(s.e, c);
+		int end_addr = jmp(r, OP_NJMP, c);
+		compile_body(s.body, c);
+		jmp_addr(0, OP_UJMP, begin, c);
 		chunk_write_addr(c->chunk, end_addr, c->chunk->code.length);
 		break;
 	}
