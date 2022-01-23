@@ -12,10 +12,13 @@ static void free_reg(u8 reg, CompileContext *c);
 static u8 add_const_int(int n, CompileContext *c);
 static int jmp(u8 r, OpCode op, CompileContext *c);
 static int jmp_addr(u8 r, OpCode op, int addr, CompileContext *c);
-
 static u8 find_var(char *var, CompileContext *c);
-static u8 compile_op(Expr *lhs, Expr *rhs, int op, CompileContext *c);
-static u8 compile_expr(Expr e, CompileContext *c);
+static u8 move_no_dest(u8 r, int dest, CompileContext *c);
+
+static u8 compile_var(char *var, int dest, CompileContext *c);
+static u8 compile_int(int n, int dest, CompileContext *c);
+static u8 compile_op(Expr *lhs, Expr *rhs, int op, int dest, CompileContext *c);
+static u8 compile_expr(Expr e, int dest, CompileContext *c);
 static void compile_statement(Statement s, CompileContext *c);
 static void compile_body(Array a, CompileContext *c);
 static Chunk *compile_function(Function f);
@@ -87,19 +90,40 @@ find_var(char *var, CompileContext *c)
 }
 
 static u8
-compile_op(Expr *lhs, Expr *rhs, int op, CompileContext *c)
+move_no_dest(u8 r, int dest, CompileContext *c)
 {
-	u8 l, r, o;
+	if (dest != -1) {
+		Instruction i = {.op = OP_MOV, .a = (u8)dest, .b = r};
+		chunk_write(c->chunk, i);
+		return (u8)dest;
+	} else {
+		return r;
+	}
+}
+
+static u8
+compile_var(char *var, int dest, CompileContext *c)
+{
+	return move_no_dest(find_var(var, c), dest, c);
+}
+
+static u8
+compile_int(int n, int dest, CompileContext *c)
+{
+	return move_no_dest(add_const_int(n, c), dest, c);
+}
+
+static u8
+compile_op(Expr *lhs, Expr *rhs, int op, int dest, CompileContext *c)
+{
 	Instruction i;
 
-	l = compile_expr(*lhs, c);
-	o = new_reg(c);
-	i.a = o;
-	i.b = l;
-	if (rhs != NULL) {
-		r = compile_expr(*rhs, c);
-		i.c = r;
-	}
+	if (dest == -1)
+		dest = new_reg(c);
+	i.a = dest;
+	i.b = compile_expr(*lhs, -1, c);
+	if (rhs != NULL)
+		i.c = compile_expr(*rhs, -1, c);
 	switch (op) {
 	case O_PLUS:
 		i.op = OP_ADDI;
@@ -108,24 +132,21 @@ compile_op(Expr *lhs, Expr *rhs, int op, CompileContext *c)
 		i.op = OP_SUBI;
 		break;
 	}
-	free_reg(l, c);
-	if (rhs != NULL)
-		free_reg(r, c);
 
 	chunk_write(c->chunk, i);
-	return o;
+	return (u8)dest;
 }
 
 static u8
-compile_expr(Expr e, CompileContext *c)
+compile_expr(Expr e, int dest, CompileContext *c)
 {
 	switch (e.type) {
 	case E_NUM:
-		return add_const_int(e.number, c);
+		return compile_int(e.number, dest, c);
 	case E_OP:
-		return compile_op(e.left, e.right, e.op, c);
+		return compile_op(e.left, e.right, e.op, dest, c);
 	case E_VAR:
-		return find_var(e.name, c);
+		return compile_var(e.name, dest, c);
 	default:
 		return -1;
 	}
@@ -136,8 +157,9 @@ compile_statement(Statement s, CompileContext *c)
 {
 	switch (s.type) {
 	case S_IF: {
-		u8 r = compile_expr(s.e, c);
+		u8 r = compile_expr(s.e, -1, c);
 		int if_addr = jmp(r, OP_CJMP, c);
+		free_reg(r, c);
 		if (s.elseb.length != 0) {
 			compile_body(s.elseb, c);
 		}
@@ -149,16 +171,18 @@ compile_statement(Statement s, CompileContext *c)
 	}
 	case S_WHILE: {
 		int begin = c->chunk->code.length;
-		u8 r = compile_expr(s.e, c);
+		u8 r = compile_expr(s.e, -1, c);
 		int end_addr = jmp(r, OP_NJMP, c);
+		free_reg(r, c);
 		compile_body(s.body, c);
 		jmp_addr(0, OP_UJMP, begin, c);
 		chunk_write_addr(c->chunk, end_addr, c->chunk->code.length);
 		break;
 	}
-	case S_EXPR:
-		compile_expr(s.e, c);
+	case S_EXPR: {
+		free_reg(compile_expr(s.e, -1, c), c);
 		break;
+	}
 	default:
 		break;
 	}

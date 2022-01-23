@@ -6,8 +6,9 @@
 
 typedef enum {
 	OP_RET,
-	OP_ADDI, OP_SUBI, OP_MULTI, OP_DIVI, OP_EQUI,
-	OP_CJMP, OP_NJMP, OP_UJMP
+	OP_ADDI, OP_SUBI, OP_MULI, OP_DIVI, OP_EQUI,
+	OP_CJMP, OP_NJMP, OP_UJMP,
+	OP_MOV
 } OpCode;
 
 typedef struct {
