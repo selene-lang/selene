@@ -12,12 +12,15 @@ static void free_reg(u8 reg, CompileContext *c);
 static u8 add_const_int(int n, CompileContext *c);
 static int jmp(u8 r, OpCode op, CompileContext *c);
 static int jmp_addr(u8 r, OpCode op, int addr, CompileContext *c);
+static void add_var(char *var, CompileContext *c);
 static u8 find_var(char *var, CompileContext *c);
 static u8 move_no_dest(u8 r, int dest, CompileContext *c);
 
 static u8 compile_var(char *var, int dest, CompileContext *c);
 static u8 compile_int(int n, int dest, CompileContext *c);
 static u8 compile_op(Expr *lhs, Expr *rhs, int op, int dest, CompileContext *c);
+static u8 compile_fun_call(Expr f, Array args, int dest, CompileContext *c);
+
 static u8 compile_expr(Expr e, int dest, CompileContext *c);
 static void compile_statement(Statement s, CompileContext *c);
 static void compile_body(Array a, CompileContext *c);
@@ -38,14 +41,18 @@ new_reg(CompileContext *c)
 static void
 free_reg(u8 reg, CompileContext *c)
 {
-	c->regs[reg] = 0;
+	if (reg >= 128)
+		return;
+
+	if (c->regs[reg] == 1)
+		c->regs[reg] = 0;
 }
 
 static u8
 add_const_int(int n, CompileContext *c)
 {
 	array_write(&c->chunk->values, &n);
-	return c->chunk->values.length - 1;
+	return 128 + c->chunk->values.length - 1;
 }
 
 static int
@@ -80,12 +87,24 @@ jmp_addr(u8 r, OpCode op, int addr, CompileContext *c)
 	return index - 4;
 }
 
+static void
+add_var(char *var, CompileContext *c)
+{
+	for (int i = 0; i < 128; ++i) {
+		if (c->regs[i] == 0) {
+			c->var[i].name = var;
+			c->var[i].nreg = i;
+			c->regs[i] = 2;
+		}
+	}
+}
+
 static u8
 find_var(char *var, CompileContext *c)
 {
 	for (int i = 0; i < 128; ++i)
 		if(!strcmp(var, c->var[i].name))
-			return i + 128;
+			return i;
 	exit(1);
 }
 
@@ -133,8 +152,33 @@ compile_op(Expr *lhs, Expr *rhs, int op, int dest, CompileContext *c)
 		break;
 	}
 
+	free_reg(i.b, c);
+	if (rhs != NULL)
+		free_reg(i.c, c);
 	chunk_write(c->chunk, i);
 	return (u8)dest;
+}
+
+static u8
+compile_fun_call(Expr f, Array args, int dest, CompileContext *c)
+{
+	Instruction i;
+	Expr *x;
+
+	if (dest == -1)
+		dest = new_reg(c);
+	i.a = dest;
+	i.b = compile_expr(f, -1, c);
+	i.c = args.length;
+	chunk_write(c->chunk, i);
+
+	x = (Expr *)args.p;
+	i = (Instruction){ 0 };
+	for (int j = 0; j < args.length; ++j) {
+		i.a = compile_expr(x[j], -1, c);
+		chunk_write(c->chunk, i);
+	}
+	return dest;
 }
 
 static u8
@@ -147,8 +191,8 @@ compile_expr(Expr e, int dest, CompileContext *c)
 		return compile_op(e.left, e.right, e.op, dest, c);
 	case E_VAR:
 		return compile_var(e.name, dest, c);
-	default:
-		return -1;
+	case E_FUNCALL:
+		return compile_fun_call(*e.left, e.args, dest, c);
 	}
 }
 
@@ -183,8 +227,16 @@ compile_statement(Statement s, CompileContext *c)
 		free_reg(compile_expr(s.e, -1, c), c);
 		break;
 	}
-	default:
+	case S_RETURN: {
+		Instruction i = {.a = compile_expr(s.e, -1, c), .op = OP_RET};
+		free_reg(i.a, c);
+		chunk_write(c->chunk, i);
 		break;
+	}
+	case S_VAR_DECL: {
+		add_var(s.name, c);
+		break;
+	}
 	}
 }
 
