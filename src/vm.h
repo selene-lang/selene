@@ -6,6 +6,7 @@
 
 typedef struct {
 	Chunk *code;
+	int pc;
 } VM;
 
 void vm_init(void);

@@ -18,7 +18,7 @@ static char *op2string[] = {
 	[O_ASSGN] = "assignment"
 };
 
-static struct {
+static struct print_instruction {
 	char *op;
 	int narg;
 	u8 extra_arg;
@@ -26,11 +26,13 @@ static struct {
 	[OP_RET]  = {"ret", 0, 0},
 	[OP_ADDI] = {"addi", 3, 0},
 	[OP_SUBI] = {"subi", 3, 0},
-	[OP_MULTI] = {"multi", 3, 0},
+	[OP_MULI] = {"multi", 3, 0},
 	[OP_DIVI] = {"divi", 3, 0},
 	[OP_EQUI] = {"equi", 3, 0},
 	[OP_CJMP] = {"cjmp", 1, 1},
 	[OP_UJMP] = {"ujmp", 0, 1},
+	[OP_NJMP] = {"njmp", 1, 1},
+	[OP_CALL] = {"call", 2, 2}
 };
 
 void
@@ -218,12 +220,9 @@ print_function(Function f)
 {
 	printf("{\"name\":\"%s\", \"scheme\":", f.name);
 	print_scheme(f.s);
-	printf(",\"body\":[");
-	for (int i = 0; i < f.bodylen; ++i) {
-		if (i != 0) printf(",");
-		print_statement(f.body[i]);
-	}
-	printf("]}");
+	printf(",\"body\":");
+	print_block(f.body);
+	printf("}");
 }
 
 void
@@ -238,9 +237,28 @@ print_program(Array prog)
 }
 
 void
-print_instruction(Instruction i)
+print_instruction(Instruction *i)
 {
-	
+	struct print_instruction pi;
+
+	pi = instruction2string[i->op];
+	printf("{\"instruction\":{\"name\":\"%s\",", pi.op);
+
+	if (pi.narg >= 1)
+		printf("\"a\":%d,", i->a);
+	if (pi.narg >= 2)
+		printf("\"b\":%d,", i->b);
+	if (pi.narg >= 3)
+		printf("\"c\":%d,", i->c);
+
+	if (pi.extra_arg == 1)
+		printf("\"address\":%d", *(u32*)(i+1));
+	if (pi.extra_arg == 2) {
+		printf("\"arguments\":[");
+		for (int j = 0; j < i->c; ++j)
+			printf("%d,", i[j].a);
+	}
+	printf("}}");
 }
 
 void

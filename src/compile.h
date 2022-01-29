@@ -10,7 +10,7 @@ typedef struct {
 		char *name;
 	} var[128];
 	u8 regs[128];
-	Chunk *chunk;
+	Chunk chunk;
 } CompileContext;
 
 #endif

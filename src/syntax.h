@@ -58,10 +58,10 @@ struct statement {
 };
 
 typedef struct {
-	Statement *body;
-	int bodylen;
+	Array body;
 	Scheme s;
 	char *name;
+	Array args;
 } Function;
 
 #endif

@@ -460,32 +460,33 @@ function(void)
 	int clen;
 	Scheme s;
 	Function f;
-	Array a, targs;
+	Array targs;
 	Type ret, buf, tfun;
 
 	clen = types_get_ctx_len();
 	array_init(&s.bindings, sizeof(int));
 	array_init(&targs, sizeof(Type));
+	array_init(&f.args, sizeof(char *));
 
 	f.name = ident();
 
 	expect(TOKEN_OPAR);
 	if (!match(TOKEN_CPAR)) {
 		do {
+			char *x = ident();
 			s.t = types_fresh_tvar();
 			array_write(&targs, &s.t);
-			types_add_var(ident(), s);
+			types_add_var(x, s);
+			array_write(&f.args, x);
 		} while (match(TOKEN_COMMA));
 		expect(TOKEN_CPAR);
 	}
 
-	a = block();
-	f.body = a.p;
-	f.bodylen = a.length;
+	f.body = block();
 
 	ret = types_fresh_tvar();
 	buf = ret;
-	block_ret_type(a, ret);
+	block_ret_type(f.body, ret);
 	types_eval(&ret);
 
 	if (ret.type == T_VAR && ret.tvar == buf.tvar)

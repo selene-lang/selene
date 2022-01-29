@@ -1,0 +1,3 @@
+RET            - Returns from the current function
+ADDI (a, b, c) - a := b + c
+SUBI (a, b, c) - a := b - c

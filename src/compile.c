@@ -24,7 +24,8 @@ static u8 compile_fun_call(Expr f, Array args, int dest, CompileContext *c);
 static u8 compile_expr(Expr e, int dest, CompileContext *c);
 static void compile_statement(Statement s, CompileContext *c);
 static void compile_body(Array a, CompileContext *c);
-static Chunk *compile_function(Function f);
+static Chunk compile_function(Function f);
+
 
 static u8
 new_reg(CompileContext *c)
@@ -51,8 +52,8 @@ free_reg(u8 reg, CompileContext *c)
 static u8
 add_const_int(int n, CompileContext *c)
 {
-	array_write(&c->chunk->values, &n);
-	return 128 + c->chunk->values.length - 1;
+	array_write(&c->chunk.values, &n);
+	return 128 + c->chunk.values.length - 1;
 }
 
 static int
@@ -63,11 +64,11 @@ jmp(u8 r, OpCode op, CompileContext *c)
 
 	i.op = op;
 	i.a = r;
-	chunk_write(c->chunk, i);
+	chunk_write(&c->chunk, i);
 
 	/* Leave room for the address. */
-	index = c->chunk->code.length - 1;
-	chunk_write_addr(c->chunk, index, 0);
+	index = c->chunk.code.length - 1;
+	chunk_write_addr(&c->chunk, index, 0);
 
 	return index - 4;
 }
@@ -80,9 +81,9 @@ jmp_addr(u8 r, OpCode op, int addr, CompileContext *c)
 
 	i.op = op;
 	i.a = r;
-	chunk_write(c->chunk, i);
-	index = c->chunk->code.length - 1;
-	chunk_write_addr(c->chunk, index, addr);
+	chunk_write(&c->chunk, i);
+	index = c->chunk.code.length - 1;
+	chunk_write_addr(&c->chunk, index, addr);
 
 	return index - 4;
 }
@@ -113,7 +114,7 @@ move_no_dest(u8 r, int dest, CompileContext *c)
 {
 	if (dest != -1) {
 		Instruction i = {.op = OP_MOV, .a = (u8)dest, .b = r};
-		chunk_write(c->chunk, i);
+		chunk_write(&c->chunk, i);
 		return (u8)dest;
 	} else {
 		return r;
@@ -155,7 +156,7 @@ compile_op(Expr *lhs, Expr *rhs, int op, int dest, CompileContext *c)
 	free_reg(i.b, c);
 	if (rhs != NULL)
 		free_reg(i.c, c);
-	chunk_write(c->chunk, i);
+	chunk_write(&c->chunk, i);
 	return (u8)dest;
 }
 
@@ -170,13 +171,13 @@ compile_fun_call(Expr f, Array args, int dest, CompileContext *c)
 	i.a = dest;
 	i.b = compile_expr(f, -1, c);
 	i.c = args.length;
-	chunk_write(c->chunk, i);
+	chunk_write(&c->chunk, i);
 
 	x = (Expr *)args.p;
 	i = (Instruction){ 0 };
 	for (int j = 0; j < args.length; ++j) {
 		i.a = compile_expr(x[j], -1, c);
-		chunk_write(c->chunk, i);
+		chunk_write(&c->chunk, i);
 	}
 	return dest;
 }
@@ -208,19 +209,19 @@ compile_statement(Statement s, CompileContext *c)
 			compile_body(s.elseb, c);
 		}
 		int end_addr = jmp(0, OP_UJMP, c);
-		chunk_write_addr(c->chunk, if_addr, c->chunk->code.length);
+		chunk_write_addr(&c->chunk, if_addr, c->chunk.code.length);
 		compile_body(s.body, c);
-		chunk_write_addr(c->chunk, end_addr, c->chunk->code.length);
+		chunk_write_addr(&c->chunk, end_addr, c->chunk.code.length);
 		break;
 	}
 	case S_WHILE: {
-		int begin = c->chunk->code.length;
+		int begin = c->chunk.code.length;
 		u8 r = compile_expr(s.e, -1, c);
 		int end_addr = jmp(r, OP_NJMP, c);
 		free_reg(r, c);
 		compile_body(s.body, c);
 		jmp_addr(0, OP_UJMP, begin, c);
-		chunk_write_addr(c->chunk, end_addr, c->chunk->code.length);
+		chunk_write_addr(&c->chunk, end_addr, c->chunk.code.length);
 		break;
 	}
 	case S_EXPR: {
@@ -230,7 +231,7 @@ compile_statement(Statement s, CompileContext *c)
 	case S_RETURN: {
 		Instruction i = {.a = compile_expr(s.e, -1, c), .op = OP_RET};
 		free_reg(i.a, c);
-		chunk_write(c->chunk, i);
+		chunk_write(&c->chunk, i);
 		break;
 	}
 	case S_VAR_DECL: {
@@ -247,7 +248,29 @@ compile_body(Array a, CompileContext *c)
 		compile_statement(((Statement *)a.p)[i], c);
 }
 
-static Chunk *
+static Chunk
 compile_function(Function f)
 {
+	CompileContext c;
+
+	memset(&c, 1, sizeof(CompileContext));
+	chunk_init(&c.chunk);
+	
+	for (int i = 0; i < f.args.length; ++i)
+		add_var(((char **)f.args.p)[i], &c);
+	compile_body(f.body, &c);
+	return c.chunk;
+}
+
+Array
+compile_program(Array p)
+{
+	Array c;
+
+	array_init(&c, sizeof(Chunk));
+	for (int i = 0; i < p.length; ++i) {
+		Chunk chnk = compile_function(((Function *)p.p)[i]);
+		array_write(&c, &chnk);
+	}
+	return c;
 }
