@@ -8,6 +8,7 @@
 typedef struct {
 	Chunk code;
 	int pc;
+	int reg[128];
 } VM;
 
 void vm_init(VM *, Chunk);

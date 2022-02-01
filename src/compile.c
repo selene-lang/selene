@@ -151,6 +151,15 @@ compile_op(Expr *lhs, Expr *rhs, int op, int dest, CompileContext *c)
 	case O_MINUS:
 		i.op = OP_SUBI;
 		break;
+	case O_MULT:
+		i.op = OP_MULI;
+		break;
+	case O_DIV:
+		i.op = OP_DIVI;
+		break;
+	case O_EQU:
+		i.op = OP_EQUI;
+		break;
 	}
 
 	free_reg(i.b, c);

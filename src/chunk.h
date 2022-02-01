@@ -5,7 +5,7 @@
 #include "common.h"
 
 typedef enum {
-	OP_RET,
+	OP_RET, OP_VOID,
 	OP_ADDI, OP_SUBI, OP_MULI, OP_DIVI, OP_EQUI,
 	OP_CJMP, OP_NJMP, OP_UJMP,
 	OP_CALL,
