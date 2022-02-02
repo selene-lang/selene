@@ -264,7 +264,7 @@ compile_function(Function f)
 
 	memset(&c, 1, sizeof(CompileContext));
 	chunk_init(&c.chunk);
-	
+
 	for (int i = 0; i < f.args.length; ++i)
 		add_var(((char **)f.args.p)[i], &c);
 	compile_body(f.body, &c);

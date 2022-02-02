@@ -1,3 +1,7 @@
 RET  (a)       - Returns from the current function the value a
 ADDI (a, b, c) - a := b + c
 SUBI (a, b, c) - a := b - c
+MULI (a, b, c) - a := b * c
+DIVI (a, b, c) - a := b / c
+EQUI (a, b, c) - a := (b == c)
+MOV (a, b)     - a := b
