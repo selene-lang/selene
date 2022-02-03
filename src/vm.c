@@ -6,7 +6,7 @@ static int
 load(u8 r, VM *vm)
 {
 	if (r >= 128)
-		return ((int *)vm->code.values.p)[r - 128];
+		return vm->code.values[r - 128];
 	else
 		return vm->reg[r];
 }

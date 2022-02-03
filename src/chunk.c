@@ -28,6 +28,5 @@ void
 chunk_free(Chunk *chunk)
 {
 	array_free(&chunk->code);
-	array_free(&chunk->values);
 	chunk_init(chunk);
 }

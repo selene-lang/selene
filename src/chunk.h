@@ -14,7 +14,7 @@ typedef enum {
 
 typedef struct {
 	Array code;
-	Array values;
+	int values[128];
 } Chunk;
 
 typedef struct {

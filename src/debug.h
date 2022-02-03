@@ -16,5 +16,6 @@ void print_function(Function f);
 void print_program(Array prog);
 void print_instruction(Instruction *i);
 void print_chunk(Chunk c);
+void print_cporgram(Array f);
 
 #endif

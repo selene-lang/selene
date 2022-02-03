@@ -264,5 +264,25 @@ print_instruction(Instruction *i)
 void
 print_chunk(Chunk c)
 {
+	printf("{\"chunk\":{\"constants\":[");
+	for (int i = 0; i < 128; ++i)
+		printf("%d,", c.values[i]);
+	printf("],\"instructions\":[");
+	for (int i = 0; i < c.code.length; ++i) {
+		OpCode op = (*(Instruction *)c.code.p).op;
+		print_instruction(((Instruction *)c.code.p) + i);
+		if (op == OP_UJMP || op == OP_NJMP || op == OP_CJMP)
+			++i;
+		if (op == OP_CALL)
+			i += (*(Instruction *)c.code.p).c;
+		printf(",");
+	}
+	printf("]}}");
+}
 
+void
+print_cporgram(Array f)
+{
+	for (int i = 0; i < f.length; ++i)
+		print_chunk(((Chunk *)f.p)[i]);
 }

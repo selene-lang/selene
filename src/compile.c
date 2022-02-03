@@ -52,8 +52,10 @@ free_reg(u8 reg, CompileContext *c)
 static u8
 add_const_int(int n, CompileContext *c)
 {
-	array_write(&c->chunk.values, &n);
-	return 128 + c->chunk.values.length - 1;
+	if (c->nconst >= 128)
+		exit(1);
+	c->chunk.values[c->nconst++] = n;
+	return 128 + c->nconst - 1;
 }
 
 static int
@@ -239,6 +241,7 @@ compile_statement(Statement s, CompileContext *c)
 	}
 	case S_RETURN: {
 		Instruction i = {.a = compile_expr(s.e, -1, c), .op = OP_RET};
+	puts("ee");
 		free_reg(i.a, c);
 		chunk_write(&c->chunk, i);
 		break;
