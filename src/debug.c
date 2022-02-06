@@ -23,7 +23,8 @@ static struct print_instruction {
 	int narg;
 	u8 extra_arg;
 } instruction2string[] = {
-	[OP_RET]  = {"ret", 0, 0},
+	[OP_RET]  = {"ret", 1, 0},
+	[OP_MOV]  = {"mov", 2, 0}, 
 	[OP_ADDI] = {"addi", 3, 0},
 	[OP_SUBI] = {"subi", 3, 0},
 	[OP_MULI] = {"multi", 3, 0},
@@ -32,7 +33,8 @@ static struct print_instruction {
 	[OP_CJMP] = {"cjmp", 1, 1},
 	[OP_UJMP] = {"ujmp", 0, 1},
 	[OP_NJMP] = {"njmp", 1, 1},
-	[OP_CALL] = {"call", 2, 2}
+	[OP_CALL] = {"call", 2, 2},
+	[OP_VOID] = {"void", 0, 0}
 };
 
 void
@@ -258,7 +260,7 @@ print_instruction(Instruction *i)
 		for (int j = 0; j < i->c; ++j)
 			printf("%d,", i[j].a);
 	}
-	printf("}}");
+	printf("]}}");
 }
 
 void

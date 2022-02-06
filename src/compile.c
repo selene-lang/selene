@@ -26,6 +26,7 @@ static void compile_statement(Statement s, CompileContext *c);
 static void compile_body(Array a, CompileContext *c);
 static Chunk compile_function(Function f);
 
+Array fun_ctx;
 
 static u8
 new_reg(CompileContext *c)
@@ -98,6 +99,7 @@ add_var(char *var, CompileContext *c)
 			c->var[i].name = var;
 			c->var[i].nreg = i;
 			c->regs[i] = 2;
+			return;
 		}
 	}
 }
@@ -106,7 +108,10 @@ static u8
 find_var(char *var, CompileContext *c)
 {
 	for (int i = 0; i < 128; ++i)
-		if(!strcmp(var, c->var[i].name))
+		if (c->var[i].name != NULL && !strcmp(var, c->var[i].name))
+			return i;
+	for (int i = 0; i < fun_ctx.length; ++i)
+		if (!strcmp(var, ((char **)fun_ctx.p)[i]))
 			return i;
 	exit(1);
 }
@@ -179,6 +184,7 @@ compile_fun_call(Expr f, Array args, int dest, CompileContext *c)
 
 	if (dest == -1)
 		dest = new_reg(c);
+	i.op = OP_CALL;
 	i.a = dest;
 	i.b = compile_expr(f, -1, c);
 	i.c = args.length;
@@ -241,7 +247,6 @@ compile_statement(Statement s, CompileContext *c)
 	}
 	case S_RETURN: {
 		Instruction i = {.a = compile_expr(s.e, -1, c), .op = OP_RET};
-	puts("ee");
 		free_reg(i.a, c);
 		chunk_write(&c->chunk, i);
 		break;
@@ -265,7 +270,7 @@ compile_function(Function f)
 {
 	CompileContext c;
 
-	memset(&c, 1, sizeof(CompileContext));
+	memset(&c, 0, sizeof(CompileContext));
 	chunk_init(&c.chunk);
 
 	for (int i = 0; i < f.args.length; ++i)
@@ -279,8 +284,10 @@ compile_program(Array p)
 {
 	Array c;
 
+	array_init(&fun_ctx, sizeof(char *));
 	array_init(&c, sizeof(Chunk));
 	for (int i = 0; i < p.length; ++i) {
+		array_write(&fun_ctx, &((Function *)p.p)->name);
 		Chunk chnk = compile_function(((Function *)p.p)[i]);
 		array_write(&c, &chnk);
 	}

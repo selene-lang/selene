@@ -19,7 +19,5 @@ main(int argc, char **argv)
 	prog = parser_program();
 	print_program(prog);
 	f = compile_program(prog);
-	puts("ee");
 	print_cporgram(f);
-	puts("ee");
 }

@@ -441,8 +441,8 @@ block_ret_type(Array a, Type t)
 		case S_VAR_DECL:
 			break;
 		case S_IF:
-			block_ret_type(p[i].elseb, t); /* fallthrought */
-			types_eval(&t);
+			block_ret_type(p[i].elseb, t);
+			types_eval(&t); /* fallthrought */
 		case S_WHILE:
 			block_ret_type(p[i].body, t);
 			break;
@@ -477,7 +477,7 @@ function(void)
 			s.t = types_fresh_tvar();
 			array_write(&targs, &s.t);
 			types_add_var(x, s);
-			array_write(&f.args, x);
+			array_write(&f.args, &x);
 		} while (match(TOKEN_COMMA));
 		expect(TOKEN_CPAR);
 	}
