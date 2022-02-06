@@ -129,15 +129,31 @@ move_no_dest(u8 r, int dest, CompileContext *c)
 }
 
 static u8
-compile_var(char *var, int dest, CompileContext *c)
-{
-	return move_no_dest(find_var(var, c), dest, c);
-}
-
-static u8
 compile_int(int n, int dest, CompileContext *c)
 {
 	return move_no_dest(add_const_int(n, c), dest, c);
+}
+
+static u8
+compile_var(char *var, int dest, CompileContext *c)
+{
+	u8 r;
+
+	r = 255;
+	for (int i = 0; i < 128; ++i) {
+		if (c->var[i].name != NULL && !strcmp(var, c->var[i].name)) {
+			r = i;
+			break;
+		}
+	}
+	if (r != 255)
+		return move_no_dest(r, dest, c);
+
+	for (int i = 0; i < fun_ctx.length; ++i)
+		if (!strcmp(var, ((char **)fun_ctx.p)[i]))
+			return compile_int(i, dest, c);
+
+	exit(1);
 }
 
 static u8

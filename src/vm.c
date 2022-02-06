@@ -65,6 +65,8 @@ vm_run(VM vm)
 			return load(i.a, &vm);
 		case OP_CALL: {
 			VM f;
+			puts("ee");
+			printf("%d\n", load(i.b, &vm));
 			vm_init(&f, vm.prog, vm.prog[load(i.b, &vm)]);
 			for (int j = 0; j < i.c; ++j)
 				f.reg[j] = load(p[vm.pc + j + 1].a, &vm);
