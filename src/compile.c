@@ -9,15 +9,14 @@
 
 static u8 new_reg(CompileContext *c);
 static void free_reg(u8 reg, CompileContext *c);
-static u8 add_const_int(int n, CompileContext *c);
+static u8 add_const_int(long n, CompileContext *c);
 static int jmp(u8 r, OpCode op, CompileContext *c);
 static int jmp_addr(u8 r, OpCode op, int addr, CompileContext *c);
 static void add_var(char *var, CompileContext *c);
-static u8 find_var(char *var, CompileContext *c);
 static u8 move_no_dest(u8 r, int dest, CompileContext *c);
 
-static u8 compile_var(char *var, int dest, CompileContext *c);
 static u8 compile_int(int n, int dest, CompileContext *c);
+static u8 compile_var(char *var, int dest, CompileContext *c);
 static u8 compile_op(Expr *lhs, Expr *rhs, int op, int dest, CompileContext *c);
 static u8 compile_fun_call(Expr f, Array args, int dest, CompileContext *c);
 
@@ -51,11 +50,11 @@ free_reg(u8 reg, CompileContext *c)
 }
 
 static u8
-add_const_int(int n, CompileContext *c)
+add_const_int(long n, CompileContext *c)
 {
 	if (c->nconst >= 128)
 		exit(1);
-	c->chunk.values[c->nconst++] = n;
+	c->chunk.values[c->nconst++] = (u64)n;
 	return 128 + c->nconst - 1;
 }
 
@@ -105,18 +104,6 @@ add_var(char *var, CompileContext *c)
 }
 
 static u8
-find_var(char *var, CompileContext *c)
-{
-	for (int i = 0; i < 128; ++i)
-		if (c->var[i].name != NULL && !strcmp(var, c->var[i].name))
-			return i;
-	for (int i = 0; i < fun_ctx.length; ++i)
-		if (!strcmp(var, ((char **)fun_ctx.p)[i]))
-			return i;
-	exit(1);
-}
-
-static u8
 move_no_dest(u8 r, int dest, CompileContext *c)
 {
 	if (dest != -1) {
@@ -161,9 +148,7 @@ compile_op(Expr *lhs, Expr *rhs, int op, int dest, CompileContext *c)
 {
 	Instruction i;
 
-	if (dest == -1)
-		dest = new_reg(c);
-	i.a = dest;
+	i.a = dest == -1 ? new_reg(c) : dest;
 	i.b = compile_expr(*lhs, -1, c);
 	if (rhs != NULL)
 		i.c = compile_expr(*rhs, -1, c);
@@ -189,7 +174,7 @@ compile_op(Expr *lhs, Expr *rhs, int op, int dest, CompileContext *c)
 	if (rhs != NULL)
 		free_reg(i.c, c);
 	chunk_write(&c->chunk, i);
-	return (u8)dest;
+	return i.a;
 }
 
 static u8

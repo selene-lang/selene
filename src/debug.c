@@ -24,7 +24,7 @@ static struct print_instruction {
 	u8 extra_arg;
 } instruction2string[] = {
 	[OP_RET]  = {"ret", 1, 0},
-	[OP_MOV]  = {"mov", 2, 0}, 
+	[OP_MOV]  = {"mov", 2, 0},
 	[OP_ADDI] = {"addi", 3, 0},
 	[OP_SUBI] = {"subi", 3, 0},
 	[OP_MULI] = {"multi", 3, 0},
@@ -244,40 +244,45 @@ print_instruction(Instruction *i)
 	struct print_instruction pi;
 
 	pi = instruction2string[i->op];
-	printf("{\"instruction\":{\"name\":\"%s\",", pi.op);
+	printf("{\"instruction\":{\"name\":\"%s\"", pi.op);
 
 	if (pi.narg >= 1)
-		printf("\"a\":%d,", i->a);
+		printf(",\"a\":%d", i->a);
 	if (pi.narg >= 2)
-		printf("\"b\":%d,", i->b);
+		printf(",\"b\":%d", i->b);
 	if (pi.narg >= 3)
-		printf("\"c\":%d,", i->c);
+		printf(",\"c\":%d", i->c);
 
 	if (pi.extra_arg == 1)
-		printf("\"address\":%d", *(u32*)(i+1));
+		printf(",\"address\":%d", *(u32*)(i+1));
 	if (pi.extra_arg == 2) {
-		printf("\"arguments\":[");
-		for (int j = 0; j < i->c; ++j)
-			printf("%d,", i[j].a);
+		printf(",\"arguments\":[");
+		for (int j = 0; j < i->c; ++j) {
+			if (j != 0) printf(",");
+			printf("%d", i[j].a);
+		}
+		printf("]");
 	}
-	printf("]}}");
+	printf("}}");
 }
 
 void
 print_chunk(Chunk c)
 {
 	printf("{\"chunk\":{\"constants\":[");
-	for (int i = 0; i < 128; ++i)
-		printf("%d,", c.values[i]);
+	for (int i = 0; i < 128; ++i) {
+		if (i != 0) printf(",");
+		printf("%ld", (long)c.values[i]);
+	}
 	printf("],\"instructions\":[");
 	for (int i = 0; i < c.code.length; ++i) {
+		if (i != 0) printf(",");
 		OpCode op = (*(Instruction *)c.code.p).op;
 		print_instruction(((Instruction *)c.code.p) + i);
 		if (op == OP_UJMP || op == OP_NJMP || op == OP_CJMP)
 			++i;
 		if (op == OP_CALL)
 			i += (*(Instruction *)c.code.p).c;
-		printf(",");
 	}
 	printf("]}}");
 }

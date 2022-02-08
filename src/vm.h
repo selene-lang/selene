@@ -9,11 +9,11 @@ typedef struct {
 	Chunk *prog;
 	Chunk code;
 	int pc;
-	int reg[128];
+	u64 reg[128];
 } VM;
 
 void vm_init(VM *, Chunk *, Chunk);
-int vm_run(VM);
+u64 vm_run(VM);
 
 void vm_run_program(Array);
 

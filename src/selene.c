@@ -22,7 +22,5 @@ main(int argc, char **argv)
 	print_program(prog);
 	f = compile_program(prog);
 	print_cporgram(f);
-	puts("ee");
 	vm_init(&vm, (Chunk *)f.p, ((Chunk *)f.p)[1]);
-	printf("%d\n", vm_run(vm));
 }

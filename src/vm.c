@@ -1,8 +1,8 @@
 #include "vm.h"
 
-static int load(u8 r, VM *vm);
+static u64 load(u8 r, VM *vm);
 
-static int
+static u64
 load(u8 r, VM *vm)
 {
 	if (r >= 128)
@@ -19,7 +19,7 @@ vm_init(VM *vm, Chunk *prog, Chunk c)
 	vm->prog = prog;
 }
 
-int
+u64
 vm_run(VM vm)
 {
 	Instruction *p;
@@ -29,19 +29,19 @@ vm_run(VM vm)
 		Instruction i = p[vm.pc];
 		switch (i.op) {
 		case OP_ADDI:
-			vm.reg[i.a] = load(i.b, &vm) + load(i.c, &vm);
+			vm.reg[i.a] = (u64)((long)load(i.b, &vm) + (long)load(i.c, &vm));
 			break;
 		case OP_SUBI:
-			vm.reg[i.a] = load(i.b, &vm) - load(i.c, &vm);
+			vm.reg[i.a] = (u64)((long)load(i.b, &vm) - (long)load(i.c, &vm));
 			break;
 		case OP_MULI:
-			vm.reg[i.a] = load(i.b, &vm) * load(i.c, &vm);
+			vm.reg[i.a] = (u64)((long)load(i.b, &vm) * (long)load(i.c, &vm));
 			break;
 		case OP_DIVI:
-			vm.reg[i.a] = load(i.b, &vm) / load(i.c, &vm);
+			vm.reg[i.a] = (u64)((long)load(i.b, &vm) / (long)load(i.c, &vm));
 			break;
 		case OP_EQUI:
-			vm.reg[i.a] = (load(i.b, &vm) == load(i.c, &vm));
+			vm.reg[i.a] = (u64)(long)(load(i.b, &vm) == load(i.c, &vm));
 			break;
 		case OP_CJMP:
 			++vm.pc;
@@ -65,9 +65,7 @@ vm_run(VM vm)
 			return load(i.a, &vm);
 		case OP_CALL: {
 			VM f;
-			puts("ee");
-			printf("%d\n", load(i.b, &vm));
-			vm_init(&f, vm.prog, vm.prog[load(i.b, &vm)]);
+			vm_init(&f, vm.prog, vm.prog[(long)load(i.b, &vm)]);
 			for (int j = 0; j < i.c; ++j)
 				f.reg[j] = load(p[vm.pc + j + 1].a, &vm);
 			vm.reg[i.a] = vm_run(f);
