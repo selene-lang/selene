@@ -75,4 +75,3 @@ divf(void *p)
 	d = ((double *)p)[0] + ((double *)p)[1];
 	return ((u64 *)&d)[0];
 }
-

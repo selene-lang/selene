@@ -20,7 +20,8 @@ static void skip_whitespaces(void);
 static char peek(void);
 static int match(char c);
 
-static enum token check_keyword(int n, char *s, enum token t);
+static int check_keyword(int n, char *s);
+static enum token check_one_keyword(int n, char *s, enum token t);
 static enum token ident_type(void);
 
 static Token number(void);
@@ -28,10 +29,10 @@ static Token identifier(void);
 
 static Lexer lexer;
 static const enum token single_token_table[255] = {
-	['('] = TOKEN_OPAR, [')'] = TOKEN_CPAR, ['{'] = TOKEN_OBRA,
-	['}'] = TOKEN_CBRA, [';'] = TOKEN_SEMI, ['+'] = TOKEN_PLUS,
-	['/'] = TOKEN_DIV,  ['*'] = TOKEN_MULT, ['-'] = TOKEN_MINUS,
-	[','] = TOKEN_COMMA
+	['('] = TOKEN_OPAR,  [')'] = TOKEN_CPAR, ['{'] = TOKEN_OBRA,
+	['}'] = TOKEN_CBRA,  [';'] = TOKEN_SEMI, ['+'] = TOKEN_PLUS,
+	['/'] = TOKEN_DIV,   ['*'] = TOKEN_MULT, ['-'] = TOKEN_MINUS,
+	[','] = TOKEN_COMMA, [':'] = TOKEN_COL,
 };
 
 static Token
@@ -96,13 +97,21 @@ match(char c)
 	return 1;
 }
 
-static enum token
-check_keyword(int n, char *s, enum token t)
+static int
+check_keyword(int n, char *s)
 {
 	if ((int)(lexer.current - lexer.start) == strlen(s) &&
 	    !memcmp(lexer.start + n, s + n, strlen(s) - n)) {
-		return t;
+		return 1;
 	}
+	return 0;
+}
+
+static enum token
+check_one_keyword(int n, char *s, enum token t)
+{
+	if (check_keyword(n, s))
+		return t;
 	return TOKEN_IDENT;
 }
 
@@ -110,12 +119,17 @@ static enum token
 ident_type(void)
 {
 	switch (lexer.start[0]) {
-	case 'e': return check_keyword(1, "else", TOKEN_ELSE);
-	case 'f': return check_keyword(1, "fun", TOKEN_FUN);
-	case 'i': return check_keyword(1, "if", TOKEN_IF);
-	case 'r': return check_keyword(1, "return", TOKEN_RETURN);
-	case 'v': return check_keyword(1, "var", TOKEN_VAR);
-	case 'w': return check_keyword(1, "while", TOKEN_WHILE);
+	case 'e':
+		if (check_keyword(1, "else"))
+			return TOKEN_ELSE;
+		else if (check_keyword(1, "extern"))
+			return TOKEN_EXTERN;
+		return TOKEN_IDENT;
+	case 'f': return check_one_keyword(1, "fun", TOKEN_FUN);
+	case 'i': return check_one_keyword(1, "if", TOKEN_IF);
+	case 'r': return check_one_keyword(1, "return", TOKEN_RETURN);
+	case 'v': return check_one_keyword(1, "var", TOKEN_VAR);
+	case 'w': return check_one_keyword(1, "while", TOKEN_WHILE);
 	}
 	return TOKEN_IDENT;
 }
