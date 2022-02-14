@@ -57,7 +57,7 @@ static Statement statement(void);
 
 static void block_ret_type(Array a, Type t);
 static Function function(void);
-static Function top_level(void);
+static TopLevel top_level(void);
 
 static Parser parser;
 static const ParseRule rules[TOKEN_EOF + 1] = {
@@ -506,24 +506,34 @@ function(void)
 	return f;
 }
 
-static Function
+static TopLevel
 top_level(void)
 {
-	expect(TOKEN_FUN);
-	return function();
+	TopLevel tl;
+
+	if (match(TOKEN_FUN)) {
+		tl.fun = function();
+		tl.type = TL_FUN;
+	} else {
+		exit(1);
+	}
+	return tl;
 }
 
 Array
 parser_program(void)
 {
 	Array a;
-	Function f;
+	TopLevel tl;
 
-	array_init(&a, sizeof(Function));
+	array_init(&a, sizeof(TopLevel));
 	while (!match(TOKEN_EOF)) {
-		f = top_level();
-		types_add_var(f.name, f.s);
-		array_write(&a, &f);
+		tl = top_level();
+		if (tl.type == TL_FUN)
+			types_add_var(tl.fun.name, tl.fun.s);
+		else
+			types_add_var(tl.ext.name, tl.ext.s);
+		array_write(&a, &tl);
 	}
 	return a;
 }

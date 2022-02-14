@@ -64,4 +64,21 @@ typedef struct {
 	Array args;
 } Function;
 
+typedef struct {
+	char *name;
+	char *fun;
+	Scheme s;
+} Extern;
+
+typedef struct {
+	enum {
+		TL_FUN, TL_EXT
+	} type;
+	union {
+		Function fun;
+		Extern ext;
+	};
+	
+} TopLevel;
+
 #endif

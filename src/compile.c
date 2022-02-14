@@ -284,13 +284,17 @@ Array
 compile_program(Array p)
 {
 	Array c;
+	TopLevel tl;
 
 	array_init(&fun_ctx, sizeof(char *));
 	array_init(&c, sizeof(Chunk));
 	for (int i = 0; i < p.length; ++i) {
-		array_write(&fun_ctx, &((Function *)p.p)->name);
-		Chunk chnk = compile_function(((Function *)p.p)[i]);
-		array_write(&c, &chnk);
+		tl = ((TopLevel *)p.p)[i];
+		if (tl.type == TL_FUN) {
+			array_write(&fun_ctx, &tl.fun.name);
+			Chunk chnk = compile_function(tl.fun);
+			array_write(&c, &chnk);
+		}
 	}
 	return c;
 }

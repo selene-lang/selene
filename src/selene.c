@@ -19,7 +19,7 @@ main(int argc, char **argv)
 	setlocale(LC_ALL, "C.UTF-8");
 	parser_init(program);
 	prog = parser_program();
-	print_program(prog);
+	puts("ee");
 	f = compile_program(prog);
 	print_cporgram(f);
 	vm_init(&vm, (Chunk *)f.p, ((Chunk *)f.p)[1]);

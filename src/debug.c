@@ -46,6 +46,7 @@ print_token(Token t)
 		printf("ident");
 		break;
 	case TOKEN_SEMI:
+	case TOKEN_COL:
 	case TOKEN_ASSIGN:
 	case TOKEN_EQUAL:
 	case TOKEN_COMMA:
@@ -66,6 +67,7 @@ print_token(Token t)
 	case TOKEN_INT:
 		printf("int");
 		break;
+	case TOKEN_EXTERN:
 	case TOKEN_WHILE:
 	case TOKEN_FUN:
 	case TOKEN_RETURN:
