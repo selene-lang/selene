@@ -48,6 +48,8 @@ static Expr fun_call(Expr fun);
 static Expr expr(void);
 static Expr parse_precedence(int precedence);
 
+static Type type(void);
+
 static Array block(void);
 static Statement ifstatement(void);
 static Statement whilestatement(void);
@@ -57,6 +59,7 @@ static Statement statement(void);
 
 static void block_ret_type(Array a, Type t);
 static Function function(void);
+static Extern pextern(void);
 static TopLevel top_level(void);
 
 static Parser parser;
@@ -334,6 +337,17 @@ parse_precedence(int precedence)
 	return e;
 }
 
+static Type
+type(void)
+{
+	Type t;
+
+	t.name = ident();
+	t.type = T_CON;
+	t.arity = 0;
+	return t;
+}
+
 static Array
 block(void)
 {
@@ -504,6 +518,15 @@ function(void)
 	types_set_ctx_len(clen);
 
 	return f;
+}
+
+static Extern
+pextern(void)
+{
+	Extern ext;
+
+	ext.name = ident();
+	return ext;
 }
 
 static TopLevel
