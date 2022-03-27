@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "chunk.h"
+#include "compile.h"
 #include "lexer.h"
 #include "syntax.h"
 
@@ -16,6 +17,6 @@ void print_function(Function f);
 void print_program(Array prog);
 void print_instruction(Instruction *i);
 void print_chunk(Chunk c);
-void print_cporgram(Array f);
+void print_cporgram(Program f);
 
 #endif

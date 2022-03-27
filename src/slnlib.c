@@ -2,6 +2,8 @@
 
 #include "common.h"
 
+#include "slnlib.h"
+
 u64
 print_int(void *p)
 {

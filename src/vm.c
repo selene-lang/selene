@@ -12,7 +12,7 @@ load(u8 r, VM *vm)
 }
 
 void
-vm_init(VM *vm, Chunk *prog, Chunk c)
+vm_init(VM *vm, Program prog, Chunk c)
 {
 	vm->pc = 0;
 	vm->code = c;
@@ -65,7 +65,7 @@ vm_run(VM vm)
 			return load(i.a, &vm);
 		case OP_CALL: {
 			VM f;
-			vm_init(&f, vm.prog, vm.prog[(long)load(i.b, &vm)]);
+			vm_init(&f, vm.prog, vm.prog.fun[(long)load(i.b, &vm)]);
 			for (int j = 0; j < i.c; ++j)
 				f.reg[j] = load(p[vm.pc + j + 1].a, &vm);
 			vm.reg[i.a] = vm_run(f);

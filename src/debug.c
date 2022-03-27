@@ -290,8 +290,8 @@ print_chunk(Chunk c)
 }
 
 void
-print_cporgram(Array f)
+print_cporgram(Program p)
 {
-	for (int i = 0; i < f.length; ++i)
-		print_chunk(((Chunk *)f.p)[i]);
+	for (int i = 0; i < p.nfun; ++i)
+		print_chunk(p.fun[i]);
 }

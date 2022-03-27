@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "chunk.h"
+#include "syntax.h"
 
 typedef struct {
 	struct {
@@ -14,6 +15,13 @@ typedef struct {
 	Chunk chunk;
 } CompileContext;
 
-Array compile_program(Array p);
+typedef struct {
+	Chunk *fun;
+	FunPtr *ext;
+	int nfun;
+	int next;
+} Program;
 
-#endif
+Program compile_program(Array p);
+
+#endif /* __COMPILE_H_ */

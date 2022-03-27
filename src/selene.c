@@ -13,7 +13,7 @@ int
 main(int argc, char **argv)
 {
 	Array prog;
-	Array f;
+	Program f;
 	VM vm;
 
 	setlocale(LC_ALL, "C.UTF-8");
@@ -22,5 +22,5 @@ main(int argc, char **argv)
 	puts("ee");
 	f = compile_program(prog);
 	print_cporgram(f);
-	vm_init(&vm, (Chunk *)f.p, ((Chunk *)f.p)[1]);
+	vm_init(&vm, f, f.fun[1]);
 }

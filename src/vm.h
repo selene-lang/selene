@@ -3,16 +3,17 @@
 
 #include "chunk.h"
 #include "common.h"
+#include "compile.h"
 #include "syntax.h"
 
 typedef struct {
-	Chunk *prog;
+	Program prog;
 	Chunk code;
 	int pc;
 	u64 reg[128];
 } VM;
 
-void vm_init(VM *, Chunk *, Chunk);
+void vm_init(VM *, Program, Chunk);
 u64 vm_run(VM);
 
 void vm_run_program(Array);

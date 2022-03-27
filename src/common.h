@@ -11,4 +11,6 @@ typedef uint16_t u16;
 typedef uint32_t u32;
 typedef void *u64;
 
-#endif
+typedef u64 (*FunPtr)(void *);
+
+#endif /* __COMMON_H_ */

@@ -5,6 +5,7 @@
 #include "compile.h"
 
 #include "chunk.h"
+#include "slnlib.h"
 #include "syntax.h"
 
 static u8 new_reg(CompileContext *c);
@@ -14,6 +15,7 @@ static int jmp(u8 r, OpCode op, CompileContext *c);
 static int jmp_addr(u8 r, OpCode op, int addr, CompileContext *c);
 static void add_var(char *var, CompileContext *c);
 static u8 move_no_dest(u8 r, int dest, CompileContext *c);
+static FunPtr find_extern(char *);
 
 static u8 compile_int(int n, int dest, CompileContext *c);
 static u8 compile_var(char *var, int dest, CompileContext *c);
@@ -24,8 +26,19 @@ static u8 compile_expr(Expr e, int dest, CompileContext *c);
 static void compile_statement(Statement s, CompileContext *c);
 static void compile_body(Array a, CompileContext *c);
 static Chunk compile_function(Function f);
+static FunPtr compile_extern(Extern e);
 
-Array fun_ctx;
+static struct ext {
+	char *name;
+	FunPtr f;
+} slnlib_ext_dict[] = {
+	{"print_int", print_int},
+	{"print_newline", print_newline}
+};
+
+static Array fun_ctx;
+static Array ext_ctx;
+static Array ext_dict;
 
 static u8
 new_reg(CompileContext *c)
@@ -68,11 +81,10 @@ jmp(u8 r, OpCode op, CompileContext *c)
 	i.a = r;
 	chunk_write(&c->chunk, i);
 
-	/* Leave room for the address. */
-	index = c->chunk.code.length - 1;
-	chunk_write_addr(&c->chunk, index, 0);
+	index = c->chunk.code.length;
+	chunk_leave_space(&c->chunk, index, sizeof(u32));
 
-	return index - 4;
+	return index;
 }
 
 static int
@@ -84,10 +96,11 @@ jmp_addr(u8 r, OpCode op, int addr, CompileContext *c)
 	i.op = op;
 	i.a = r;
 	chunk_write(&c->chunk, i);
-	index = c->chunk.code.length - 1;
+	index = c->chunk.code.length;
+	chunk_leave_space(&c->chunk, index, sizeof(u32));
 	chunk_write_addr(&c->chunk, index, addr);
 
-	return index - 4;
+	return index;
 }
 
 static void
@@ -115,6 +128,15 @@ move_no_dest(u8 r, int dest, CompileContext *c)
 	}
 }
 
+static FunPtr
+find_extern(char *s)
+{
+	for (int i = 0; i < ext_dict.length; ++i)
+		if (!strcmp(s, ((struct ext *)ext_dict.p)[i].name))
+			return ((struct ext *)ext_dict.p)[i].f;
+	exit(1);
+}
+
 static u8
 compile_int(int n, int dest, CompileContext *c)
 {
@@ -138,6 +160,10 @@ compile_var(char *var, int dest, CompileContext *c)
 
 	for (int i = 0; i < fun_ctx.length; ++i)
 		if (!strcmp(var, ((char **)fun_ctx.p)[i]))
+			return compile_int(i, dest, c);
+
+	for (int i = 0; i < ext_ctx.length; ++i)
+		if (!strcmp(var, ((char **)ext_ctx.p)[i]))
 			return compile_int(i, dest, c);
 
 	exit(1);
@@ -271,6 +297,7 @@ compile_function(Function f)
 {
 	CompileContext c;
 
+	array_write(&fun_ctx, &f.name);
 	memset(&c, 0, sizeof(CompileContext));
 	chunk_init(&c.chunk);
 
@@ -280,21 +307,43 @@ compile_function(Function f)
 	return c.chunk;
 }
 
-Array
+static FunPtr
+compile_extern(Extern e)
+{
+	array_write(&ext_ctx, &e.name);
+	return find_extern(e.name);
+}
+
+Program
 compile_program(Array p)
 {
 	Array c;
+	Array e;
+	Program prog;
 	TopLevel tl;
 
 	array_init(&fun_ctx, sizeof(char *));
+	array_init(&ext_ctx, sizeof(char *));
+	array_init(&ext_dict, sizeof(struct ext));
 	array_init(&c, sizeof(Chunk));
+	array_init(&e, sizeof(FunPtr));
+
+	for (int i = 0; i < sizeof(slnlib_ext_dict) / sizeof(struct ext); ++i)
+		array_write(&ext_dict, slnlib_ext_dict + i);
+	
 	for (int i = 0; i < p.length; ++i) {
 		tl = ((TopLevel *)p.p)[i];
 		if (tl.type == TL_FUN) {
-			array_write(&fun_ctx, &tl.fun.name);
 			Chunk chnk = compile_function(tl.fun);
 			array_write(&c, &chnk);
+		} else if (tl.type == TL_EXT) {
+			FunPtr ext = compile_extern(tl.ext);
+			array_write(&c, &ext);
 		}
 	}
-	return c;
+	prog.fun = (Chunk *)c.p;
+	prog.nfun = c.length;
+	prog.ext = (FunPtr *)e.p;
+	prog.next = e.length;
+	return prog;
 }

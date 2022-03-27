@@ -3,8 +3,8 @@
 
 #include "common.h"
 
-void *emalloc(size_t);
-void *erealloc(void *, size_t, size_t);
-int grow_capacity(int);
+void *emalloc(size_t s);
+void *erealloc(void *p, size_t os, size_t ns);
+int grow_capacity(int n);
 
 #endif
