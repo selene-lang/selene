@@ -36,9 +36,28 @@ static struct ext {
 	{"print_newline", print_newline}
 };
 
-static Array fun_ctx;
-static Array ext_ctx;
-static Array ext_dict;
+static Array fun_ctx = {
+	.p = NULL,
+	.esize = sizeof(char *),
+	.length = 0,
+	.capacity = 0
+};
+
+static Array ext_ctx = {
+	.p = NULL,
+	.esize = sizeof(char *),
+	.length = 0,
+	.capacity = 0
+};
+
+static Array ext_dict  = {
+	.p = NULL,
+	.esize = sizeof(struct ext),
+	.length = 0,
+	.capacity = 0
+};
+
+static int is_extern;
 
 static u8
 new_reg(CompileContext *c)
@@ -158,13 +177,19 @@ compile_var(char *var, int dest, CompileContext *c)
 	if (r != 255)
 		return move_no_dest(r, dest, c);
 
-	for (int i = 0; i < fun_ctx.length; ++i)
-		if (!strcmp(var, ((char **)fun_ctx.p)[i]))
+	for (int i = 0; i < fun_ctx.length; ++i) {
+		if (!strcmp(var, ((char **)fun_ctx.p)[i])) {
+			is_extern = 0;
 			return compile_int(i, dest, c);
+		}
+	}
 
-	for (int i = 0; i < ext_ctx.length; ++i)
-		if (!strcmp(var, ((char **)ext_ctx.p)[i]))
+	for (int i = 0; i < ext_ctx.length; ++i) {
+		if (!strcmp(var, ((char **)ext_ctx.p)[i])) {
+			is_extern = 1;
 			return compile_int(i, dest, c);
+		}
+	}
 
 	exit(1);
 }
@@ -211,9 +236,9 @@ compile_fun_call(Expr f, Array args, int dest, CompileContext *c)
 
 	if (dest == -1)
 		dest = new_reg(c);
-	i.op = OP_CALL;
 	i.a = dest;
 	i.b = compile_expr(f, -1, c);
+	i.op = is_extern ? OP_CCALL : OP_CALL;
 	i.c = args.length;
 	chunk_write(&c->chunk, i);
 
@@ -249,9 +274,8 @@ compile_statement(Statement s, CompileContext *c)
 		u8 r = compile_expr(s.e, -1, c);
 		int if_addr = jmp(r, OP_CJMP, c);
 		free_reg(r, c);
-		if (s.elseb.length != 0) {
+		if (s.elseb.length != 0)
 			compile_body(s.elseb, c);
-		}
 		int end_addr = jmp(0, OP_UJMP, c);
 		chunk_write_addr(&c->chunk, if_addr, c->chunk.code.length);
 		compile_body(s.body, c);
@@ -322,15 +346,12 @@ compile_program(Array p)
 	Program prog;
 	TopLevel tl;
 
-	array_init(&fun_ctx, sizeof(char *));
-	array_init(&ext_ctx, sizeof(char *));
-	array_init(&ext_dict, sizeof(struct ext));
 	array_init(&c, sizeof(Chunk));
 	array_init(&e, sizeof(FunPtr));
 
 	for (int i = 0; i < sizeof(slnlib_ext_dict) / sizeof(struct ext); ++i)
 		array_write(&ext_dict, slnlib_ext_dict + i);
-	
+
 	for (int i = 0; i < p.length; ++i) {
 		tl = ((TopLevel *)p.p)[i];
 		if (tl.type == TL_FUN) {
@@ -338,9 +359,10 @@ compile_program(Array p)
 			array_write(&c, &chnk);
 		} else if (tl.type == TL_EXT) {
 			FunPtr ext = compile_extern(tl.ext);
-			array_write(&c, &ext);
+			array_write(&e, &ext);
 		}
 	}
+
 	prog.fun = (Chunk *)c.p;
 	prog.nfun = c.length;
 	prog.ext = (FunPtr *)e.p;

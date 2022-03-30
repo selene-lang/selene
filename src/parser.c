@@ -48,6 +48,7 @@ static Expr fun_call(Expr fun);
 static Expr expr(void);
 static Expr parse_precedence(int precedence);
 
+static Type simple_type(void);
 static Type type(void);
 
 static Array block(void);
@@ -338,13 +339,28 @@ parse_precedence(int precedence)
 }
 
 static Type
-type(void)
+simple_type(void)
 {
 	Type t;
 
 	t.name = ident();
 	t.type = T_CON;
 	t.arity = 0;
+	return t;
+}
+
+static Type
+type(void)
+{
+	Type t;
+
+	t = simple_type();
+	if (match(TOKEN_ARR)) {
+		Type res = type();
+		Type f = {.type = T_FUN, .arity = 1,
+		          .args = types_dup(t), types_dup(res)};
+		return f;
+	}
 	return t;
 }
 
@@ -526,6 +542,9 @@ pextern(void)
 	Extern ext;
 
 	ext.name = ident();
+	expect(TOKEN_COL);
+	ext.s = types_gen(type());
+	expect(TOKEN_SEMI);
 	return ext;
 }
 
@@ -537,6 +556,9 @@ top_level(void)
 	if (match(TOKEN_FUN)) {
 		tl.fun = function();
 		tl.type = TL_FUN;
+	} else if (match(TOKEN_EXTERN)) {
+		tl.ext = pextern();
+		tl.type = TL_EXT;
 	} else {
 		exit(1);
 	}

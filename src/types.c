@@ -27,8 +27,6 @@ static void bind(int v, Type t);
 
 static void app_subst(Substitution s, Type *t);
 
-static Type type_dup(Type t);
-
 Array type_variables = {
 	.p = NULL,
 	.esize = sizeof(Type),
@@ -317,4 +315,14 @@ types_eval_block(Array a)
 {
 	for (int i = 0; i < a.length; ++i)
 		types_eval_statement((Statement *)a.p + i);
+}
+
+Type *
+types_dup(Type t)
+{
+	Type *dup;
+
+	dup = emalloc(sizeof(Type));
+	*dup = t;
+	return dup;
 }

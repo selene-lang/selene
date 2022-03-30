@@ -16,6 +16,4 @@ typedef struct {
 void vm_init(VM *, Program, Chunk);
 u64 vm_run(VM);
 
-void vm_run_program(Array);
-
 #endif

@@ -45,6 +45,7 @@ print_token(Token t)
 	case TOKEN_IDENT:
 		printf("ident");
 		break;
+	case TOKEN_ARR:
 	case TOKEN_SEMI:
 	case TOKEN_COL:
 	case TOKEN_ASSIGN:
@@ -290,7 +291,7 @@ print_chunk(Chunk c)
 }
 
 void
-print_cporgram(Program p)
+print_cprogram(Program p)
 {
 	for (int i = 0; i < p.nfun; ++i)
 		print_chunk(p.fun[i]);

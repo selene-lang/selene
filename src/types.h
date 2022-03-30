@@ -25,4 +25,6 @@ void types_eval_expr(Expr *e);
 void types_eval_statement(Statement *s);
 void types_eval_block(Array a);
 
+Type *types_dup(Type t);
+
 #endif

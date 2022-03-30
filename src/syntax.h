@@ -66,7 +66,6 @@ typedef struct {
 
 typedef struct {
 	char *name;
-	char *fun;
 	Scheme s;
 } Extern;
 
@@ -78,7 +77,6 @@ typedef struct {
 		Function fun;
 		Extern ext;
 	};
-	
 } TopLevel;
 
 #endif

@@ -72,13 +72,15 @@ vm_run(VM vm)
 			vm.pc += i.c;
 			break;
 		}
+		case OP_CCALL: {
+			u64 arg[i.c];
+			for (int j = 0; j < i.c; ++j)
+				arg[j] = load(p[vm.pc + j + 1].a, &vm);
+			vm.reg[i.a] =
+				vm.prog.ext[(long)load(i.b, &vm)]((void *)arg);
+			break;
+		}
 		}
 		++vm.pc;
 	}
-}
-
-void
-vm_run_program(Array p)
-{
-	
 }

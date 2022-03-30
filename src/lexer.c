@@ -31,8 +31,8 @@ static Lexer lexer;
 static const enum token single_token_table[255] = {
 	['('] = TOKEN_OPAR,  [')'] = TOKEN_CPAR, ['{'] = TOKEN_OBRA,
 	['}'] = TOKEN_CBRA,  [';'] = TOKEN_SEMI, ['+'] = TOKEN_PLUS,
-	['/'] = TOKEN_DIV,   ['*'] = TOKEN_MULT, ['-'] = TOKEN_MINUS,
-	[','] = TOKEN_COMMA, [':'] = TOKEN_COL,
+	['/'] = TOKEN_DIV,   ['*'] = TOKEN_MULT, [','] = TOKEN_COMMA,
+	[':'] = TOKEN_COL,
 };
 
 static Token
@@ -176,6 +176,8 @@ lexer_get_token(void)
 		return mktoken(match('=') ? TOKEN_LOWEREQ : TOKEN_LOWER);
 	case '>':
 		return mktoken(match('=') ? TOKEN_GREATEREQ : TOKEN_GREATER);
+	case '-':
+		return mktoken(match('>') ? TOKEN_ARR : TOKEN_MINUS);
 	}
 	exit(1);
 }
