@@ -16,6 +16,7 @@ static Token mktoken(enum token t);
 
 static char next_char(void);
 static void skip_whitespaces(void);
+static void skip_comment(void);
 
 static char peek(void);
 static int match(char c);
@@ -50,7 +51,7 @@ mktoken(enum token t)
 static char
 next_char(void)
 {
-	return (lexer.current++)[0];
+	return *(lexer.current++);
 }
 
 static void
@@ -71,6 +72,13 @@ skip_whitespaces(void)
 			return;
 		}
 	}
+}
+
+static void
+skip_comment(void)
+{
+	while (peek() != '\n' && peek() != '\0')
+		next_char();
 }
 
 void
@@ -158,7 +166,7 @@ lexer_get_token(void)
 
 	lexer.start = lexer.current;
 
-	if (lexer.current[0] == '\0')
+	if (*lexer.current == '\0')
 		return mktoken(TOKEN_EOF);
 	c = next_char();
 
@@ -177,6 +185,10 @@ lexer_get_token(void)
 	case '>':
 		return mktoken(match('=') ? TOKEN_GREATEREQ : TOKEN_GREATER);
 	case '-':
+		if (match('-')) {
+			skip_comment();
+			return lexer_get_token();
+		}
 		return mktoken(match('>') ? TOKEN_ARR : TOKEN_MINUS);
 	}
 	exit(1);

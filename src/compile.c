@@ -32,8 +32,8 @@ static struct ext {
 	char *name;
 	FunPtr f;
 } slnlib_ext_dict[] = {
-	{"print_int", print_int},
-	{"print_newline", print_newline}
+	{"c_print_int", c_print_int},
+	{"c_print_newline", c_print_newline}
 };
 
 static Array fun_ctx = {

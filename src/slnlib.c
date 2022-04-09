@@ -5,45 +5,45 @@
 #include "slnlib.h"
 
 u64
-print_int(void *p)
+c_print_int(void *p)
 {
 	printf("%d", *(int *)p);
 	return 0;
 }
 
 u64
-print_newline(void *p)
+c_print_newline(void *p)
 {
 	printf("\n");
 	return 0;
 }
 
 u64
-addi(void *p)
+c_addi(void *p)
 {
 	return (u64)(((long *)p)[0] + ((long *)p)[1]);
 }
 
 u64
-subi(void *p)
+c_subi(void *p)
 {
 	return (u64)(((long *)p)[0] - ((long *)p)[1]);
 }
 
 u64
-muli(void *p)
+c_muli(void *p)
 {
 	return (u64)(((long *)p)[0] * ((long *)p)[1]);
 }
 
 u64
-divi(void *p)
+c_divi(void *p)
 {
 	return (u64)(((long *)p)[0] / ((long *)p)[1]);
 }
 
 u64
-addf(void *p)
+c_addf(void *p)
 {
 	double d;
 
@@ -52,7 +52,7 @@ addf(void *p)
 }
 
 u64
-subf(void *p)
+c_subf(void *p)
 {
 	double d;
 
@@ -61,7 +61,7 @@ subf(void *p)
 }
 
 u64
-mulf(void *p)
+c_mulf(void *p)
 {
 	double d;
 
@@ -70,7 +70,7 @@ mulf(void *p)
 }
 
 u64
-divf(void *p)
+c_divf(void *p)
 {
 	double d;
 
