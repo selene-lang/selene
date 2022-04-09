@@ -1,6 +1,7 @@
 #include "vm.h"
 
 static u64 load(u8 r, VM *vm);
+static long loadl(u8 r, VM *vm);
 
 static u64
 load(u8 r, VM *vm)
@@ -9,6 +10,12 @@ load(u8 r, VM *vm)
 		return vm->code.values[r - 128];
 	else
 		return vm->reg[r];
+}
+
+static long
+loadl(u8 r, VM *vm)
+{
+	return (long)load(r, vm);
 }
 
 void
@@ -29,16 +36,16 @@ vm_run(VM vm)
 		Instruction i = p[vm.pc];
 		switch (i.op) {
 		case OP_ADDI:
-			vm.reg[i.a] = (u64)((long)load(i.b, &vm) + (long)load(i.c, &vm));
+			vm.reg[i.a] = (u64)(loadl(i.b, &vm) + loadl(i.c, &vm));
 			break;
 		case OP_SUBI:
-			vm.reg[i.a] = (u64)((long)load(i.b, &vm) - (long)load(i.c, &vm));
+			vm.reg[i.a] = (u64)(loadl(i.b, &vm) - loadl(i.c, &vm));
 			break;
 		case OP_MULI:
-			vm.reg[i.a] = (u64)((long)load(i.b, &vm) * (long)load(i.c, &vm));
+			vm.reg[i.a] = (u64)(loadl(i.b, &vm) * loadl(i.c, &vm));
 			break;
 		case OP_DIVI:
-			vm.reg[i.a] = (u64)((long)load(i.b, &vm) / (long)load(i.c, &vm));
+			vm.reg[i.a] = (u64)(loadl(i.b, &vm) / loadl(i.c, &vm));
 			break;
 		case OP_EQUI:
 			vm.reg[i.a] = (u64)(long)(load(i.b, &vm) == load(i.c, &vm));
@@ -65,7 +72,7 @@ vm_run(VM vm)
 			return load(i.a, &vm);
 		case OP_CALL: {
 			VM f;
-			vm_init(&f, vm.prog, vm.prog.fun[(long)load(i.b, &vm)]);
+			vm_init(&f, vm.prog, vm.prog.fun[loadl(i.b, &vm)]);
 			for (int j = 0; j < i.c; ++j)
 				f.reg[j] = load(p[vm.pc + j + 1].a, &vm);
 			vm.reg[i.a] = vm_run(f);
@@ -76,8 +83,8 @@ vm_run(VM vm)
 			u64 arg[i.c];
 			for (int j = 0; j < i.c; ++j)
 				arg[j] = load(p[vm.pc + j + 1].a, &vm);
-			vm.reg[i.a] =
-				vm.prog.ext[(long)load(i.b, &vm)]((void *)arg);
+			vm.reg[i.a] = vm.prog.ext[loadl(i.b, &vm)]((void *)arg);
+			vm.pc += i.c;
 			break;
 		}
 		}

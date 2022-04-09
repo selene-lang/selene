@@ -49,6 +49,7 @@ static Expr expr(void);
 static Expr parse_precedence(int precedence);
 
 static Type simple_type(void);
+static Type function_type(void);
 static Type type(void);
 
 static Array block(void);
@@ -288,6 +289,7 @@ binop(Expr lhs)
 	return e;
 }
 
+#include "debug.h"
 static Expr
 fun_call(Expr fun)
 {
@@ -312,6 +314,7 @@ fun_call(Expr fun)
 	for (int i = 0; i < e.args.length; ++i)
 		t.args[i] = ((Expr *)e.args.p)[i].t;
 
+	
 	types_unify(t, fun.t);
 	e.t = *t.res;
 	types_eval_expr(&e);
@@ -350,10 +353,36 @@ simple_type(void)
 }
 
 static Type
+function_type(void)
+{
+	Type t;
+	Array args;
+
+	array_init(&args, sizeof(Type));
+	
+	if (!match(TOKEN_CPAR)) {
+		do {
+			t = type();
+			array_write(&args, &t);
+		} while (match(TOKEN_COMMA));
+		expect(TOKEN_CPAR);
+	}
+	expect(TOKEN_ARR);
+
+	t.type = T_FUN;
+	t.args = (Type *)args.p;
+	t.arity = args.length;
+	t.res = types_dup(type());
+	return t;
+}
+
+static Type
 type(void)
 {
 	Type t;
 
+	if (match(TOKEN_OPAR))
+		return function_type();
 	t = simple_type();
 	if (match(TOKEN_ARR)) {
 		Type res = type();

@@ -14,9 +14,10 @@ void print_expr(Expr e);
 void print_block(Array a);
 void print_statement(Statement s);
 void print_function(Function f);
-void print_program(Array prog);
+void print_extern(Extern e);
+void print_top_levels(Array tl);
 void print_instruction(Instruction *i);
 void print_chunk(Chunk c);
-void print_cprogram(Program f);
+void print_program(Program prog);
 
 #endif

@@ -223,7 +223,7 @@ print_statement(Statement s)
 void
 print_function(Function f)
 {
-	printf("{\"name\":\"%s\", \"scheme\":", f.name);
+	printf("{\"name\":\"%s\",\"scheme\":", f.name);
 	print_scheme(f.s);
 	printf(",\"body\":");
 	print_block(f.body);
@@ -231,12 +231,24 @@ print_function(Function f)
 }
 
 void
-print_program(Array prog)
+print_extern(Extern e)
+{
+	printf("{\"name\":\"%s\",\"scheme\":", e.name);
+	print_scheme(e.s);
+	printf("}");
+}
+
+void
+print_top_levels(Array tl)
 {
 	printf("[");
-	for (int i = 0; i < prog.length; ++i) {
+	for (int i = 0; i < tl.length; ++i) {
+		TopLevel t = ((TopLevel *)tl.p)[i];
 		if (i != 0) printf(",");
-		print_function(((Function *)prog.p)[i]);
+		if (t.type == TL_FUN)
+			print_function(t.fun);
+		else
+			print_extern(t.ext);
 	}
 	printf("]");
 }
