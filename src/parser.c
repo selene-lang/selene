@@ -448,7 +448,10 @@ varstatement(void)
 	s.name = ident();
 	s.type = S_VAR_DECL;
 
-	sch.t = types_fresh_tvar();
+	expect(TOKEN_ASSIGN);
+	s.e = expr();
+
+	sch.t = s.e.t;
 	array_init(&sch.bindings, sizeof(int));
 	types_add_var(s.name, sch);
 
@@ -475,7 +478,7 @@ statement(void)
 		return ifstatement();
 	} else if (match(TOKEN_WHILE)) {
 		return whilestatement();
-	} else if (match(TOKEN_VAR)) {
+	} else if (match(TOKEN_LET)) {
 		return varstatement();
 	} else if (match(TOKEN_RETURN)) {
 		return returnstatement();

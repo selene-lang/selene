@@ -13,12 +13,13 @@ static void free_reg(u8 reg, CompileContext *c);
 static u8 add_const_int(long n, CompileContext *c);
 static int jmp(u8 r, OpCode op, CompileContext *c);
 static int jmp_addr(u8 r, OpCode op, int addr, CompileContext *c);
-static void add_var(char *var, CompileContext *c);
+static u8 add_var(char *var, CompileContext *c);
 static u8 move_no_dest(u8 r, int dest, CompileContext *c);
 static FunPtr find_extern(char *);
 
 static u8 compile_int(int n, int dest, CompileContext *c);
 static u8 compile_var(char *var, int dest, CompileContext *c);
+static u8 compile_assign(u8 v, Expr e, int dest, CompileContext *c);
 static u8 compile_op(Expr *lhs, Expr *rhs, int op, int dest, CompileContext *c);
 static u8 compile_fun_call(Expr f, Array args, int dest, CompileContext *c);
 
@@ -122,7 +123,7 @@ jmp_addr(u8 r, OpCode op, int addr, CompileContext *c)
 	return index;
 }
 
-static void
+static u8
 add_var(char *var, CompileContext *c)
 {
 	for (int i = 0; i < 128; ++i) {
@@ -130,9 +131,10 @@ add_var(char *var, CompileContext *c)
 			c->var[i].name = var;
 			c->var[i].nreg = i;
 			c->regs[i] = 2;
-			return;
+			return i;
 		}
 	}
+	exit(1);
 }
 
 static u8
@@ -195,10 +197,24 @@ compile_var(char *var, int dest, CompileContext *c)
 }
 
 static u8
+compile_assign(u8 v, Expr e, int dest, CompileContext *c)
+{
+	u8 r;
+
+	compile_expr(e, v, c);
+	r = move_no_dest(v, dest, c);
+	return r;
+}
+
+static u8
 compile_op(Expr *lhs, Expr *rhs, int op, int dest, CompileContext *c)
 {
 	Instruction i;
 
+	if (op == O_ASSGN) {
+		u8 v = compile_expr(*lhs, -1, c);
+		return compile_assign(v, *rhs, dest, c);
+	}
 	i.a = dest == -1 ? new_reg(c) : dest;
 	i.b = compile_expr(*lhs, -1, c);
 	if (rhs != NULL)
@@ -303,7 +319,8 @@ compile_statement(Statement s, CompileContext *c)
 		break;
 	}
 	case S_VAR_DECL: {
-		add_var(s.name, c);
+		u8 v = add_var(s.name, c);
+		compile_assign(v, s.e, -1, c);
 		break;
 	}
 	}
@@ -326,7 +343,7 @@ compile_function(Function f)
 	chunk_init(&c.chunk);
 
 	for (int i = 0; i < f.args.length; ++i)
-		add_var(((char **)f.args.p)[i], &c);
+		(void)add_var(((char **)f.args.p)[i], &c);
 	compile_body(f.body, &c);
 	return c.chunk;
 }

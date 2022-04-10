@@ -135,8 +135,8 @@ ident_type(void)
 		return TOKEN_IDENT;
 	case 'f': return check_one_keyword(1, "fun", TOKEN_FUN);
 	case 'i': return check_one_keyword(1, "if", TOKEN_IF);
+	case 'l': return check_one_keyword(1, "let", TOKEN_LET);
 	case 'r': return check_one_keyword(1, "return", TOKEN_RETURN);
-	case 'v': return check_one_keyword(1, "var", TOKEN_VAR);
 	case 'w': return check_one_keyword(1, "while", TOKEN_WHILE);
 	}
 	return TOKEN_IDENT;
