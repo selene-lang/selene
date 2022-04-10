@@ -11,7 +11,7 @@ char *program = "extern c_print_int : int -> void;"
 	"extern c_print_newline : () -> void;"
 	"-- We need this wrapper because of the way extern functions are called.\n"
 	"fun print_int(n){c_print_int(n);}"
-	"fun main(){print_int(1);}";
+	"fun main(){if 1 == 1 {print_int(1);}}";
 
 int
 main(int argc, char **argv)

@@ -289,7 +289,6 @@ binop(Expr lhs)
 	return e;
 }
 
-#include "debug.h"
 static Expr
 fun_call(Expr fun)
 {
@@ -421,13 +420,12 @@ ifstatement(void)
 
 	s.e = expr();
 	s.type = S_IF;
-	types_unify(s.e.t, types_int);
+	types_unify(s.e.t, types_bool);
 	s.body = block();
-	if (match(TOKEN_ELSE)) {
+	if (match(TOKEN_ELSE))
 		s.elseb = block();
-	} else {
+	else
 		array_init(&s.elseb, sizeof(Statement));
-	}
 	return s;
 }
 

@@ -53,7 +53,7 @@ vm_run(VM vm)
 		case OP_CJMP:
 			++vm.pc;
 			if (load(i.a, &vm))
-				vm.pc = *(int *)(p + vm.pc) - 1;
+				vm.pc = *(u32 *)(p + vm.pc) - 1;
 			break;
 		case OP_UJMP:
 			vm.pc = *(int *)(p + vm.pc + 1) - 1;
