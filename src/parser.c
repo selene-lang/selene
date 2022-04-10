@@ -313,7 +313,7 @@ fun_call(Expr fun)
 	for (int i = 0; i < e.args.length; ++i)
 		t.args[i] = ((Expr *)e.args.p)[i].t;
 
-	
+
 	types_unify(t, fun.t);
 	e.t = *t.res;
 	types_eval_expr(&e);
@@ -358,7 +358,7 @@ function_type(void)
 	Array args;
 
 	array_init(&args, sizeof(Type));
-	
+
 	if (!match(TOKEN_CPAR)) {
 		do {
 			t = type();
@@ -434,8 +434,10 @@ whilestatement(void)
 {
 	Statement s;
 
-	s = (Statement){.e = expr(), .type = S_WHILE, .body = block()};
-	types_unify(s.e.t, types_int);
+	s.e = expr();
+	s.type = S_WHILE;
+	s.body = block();
+	types_unify(s.e.t, types_bool);
 	return s;
 }
 

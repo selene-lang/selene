@@ -235,6 +235,12 @@ compile_op(Expr *lhs, Expr *rhs, int op, int dest, CompileContext *c)
 	case O_EQU:
 		i.op = OP_EQUI;
 		break;
+	case O_GRT:
+		i.op = OP_GRTI;
+		break;
+	case O_LWR:
+		i.op = OP_LWRI;
+		break;
 	}
 
 	free_reg(i.b, c);

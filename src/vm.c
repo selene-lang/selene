@@ -50,6 +50,12 @@ vm_run(VM vm)
 		case OP_EQUI:
 			vm.reg[i.a] = (u64)(long)(load(i.b, &vm) == load(i.c, &vm));
 			break;
+		case OP_GRTI:
+			vm.reg[i.a] = (u64)(long)(load(i.b, &vm) > load(i.c, &vm));
+			break;
+		case OP_LWRI:
+			vm.reg[i.a] = (u64)(long)(load(i.b, &vm) < load(i.c, &vm));
+			break;
 		case OP_CJMP:
 			++vm.pc;
 			if (load(i.a, &vm))
