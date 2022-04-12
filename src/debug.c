@@ -72,7 +72,7 @@ print_token(Token t)
 	case TOKEN_WHILE:
 	case TOKEN_FUN:
 	case TOKEN_RETURN:
-	case TOKEN_VAR:
+	case TOKEN_LET:
 	case TOKEN_IF:
 	case TOKEN_ELSE:
 		printf("keyword");

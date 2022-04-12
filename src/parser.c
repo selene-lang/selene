@@ -288,6 +288,7 @@ binop(Expr lhs)
 	e.op = tok2op[t];
 	return e;
 }
+#include "debug.h"
 
 static Expr
 fun_call(Expr fun)
@@ -312,7 +313,7 @@ fun_call(Expr fun)
 	t.args = emalloc(e.args.length * sizeof(Type));
 	for (int i = 0; i < e.args.length; ++i)
 		t.args[i] = ((Expr *)e.args.p)[i].t;
-
+	
 
 	types_unify(t, fun.t);
 	e.t = *t.res;
@@ -523,7 +524,7 @@ function(void)
 	Scheme s;
 	Function f;
 	Array targs;
-	Type ret, buf, tfun;
+	Type buf, tfun;
 
 	clen = types_get_ctx_len();
 	array_init(&targs, sizeof(Type));
@@ -559,7 +560,7 @@ function(void)
 	block_ret_type(f.body, buf);
 	types_eval(tfun.res);
 
-	if (ret.type == T_VAR && ret.tvar == buf.tvar)
+	if (tfun.res->type == T_VAR && tfun.res->tvar == buf.tvar)
 		tfun.res = &types_void;
 	else
 		tfun.res = types_get_tvar(buf);

@@ -7,13 +7,13 @@
 #include "syntax.h"
 
 typedef struct {
-	Program prog;
-	Chunk code;
+	Chunk *code;
 	int pc;
 	u64 reg[128];
 } VM;
 
-void vm_init(VM *, Program, Chunk);
-u64 vm_run(VM);
+void vm_init(VM *, Chunk *);
+u64 vm_run(VM *);
+Program vm_prog;
 
 #endif

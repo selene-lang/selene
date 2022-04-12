@@ -88,7 +88,7 @@ ftv(Array *a, Type t)
 static void
 bind(int v, Type t)
 {
-	if (isftv(t, v))
+	if (isftv(t, v) && t.type != T_VAR)
 		unify_error();
 	((Type *)type_variables.p)[v] = t;
 }
