@@ -526,7 +526,6 @@ function(void)
 	Type ret, buf, tfun;
 
 	clen = types_get_ctx_len();
-	array_init(&s.bindings, sizeof(int));
 	array_init(&targs, sizeof(Type));
 	array_init(&f.args, sizeof(char *));
 
@@ -544,23 +543,26 @@ function(void)
 		expect(TOKEN_CPAR);
 	}
 
+	tfun.type = T_FUN;
+	tfun.arity = targs.length;
+	tfun.args = erealloc(targs.p, targs.capacity * sizeof(Type),
+	                     targs.length * sizeof(Type));
+	tfun.res = types_dup(types_fresh_tvar());
+
+	array_init(&s.bindings, sizeof(int));
+	s.t = tfun;
+	types_add_var(f.name, s);
+
 	f.body = block();
 
-	ret = types_fresh_tvar();
-	buf = ret;
-	block_ret_type(f.body, ret);
-	types_eval(&ret);
+	buf = *tfun.res;
+	block_ret_type(f.body, buf);
+	types_eval(tfun.res);
 
 	if (ret.type == T_VAR && ret.tvar == buf.tvar)
 		tfun.res = &types_void;
 	else
 		tfun.res = types_get_tvar(buf);
-
-	tfun.type = T_FUN;
-	tfun.arity = targs.length;
-	tfun.args = erealloc(targs.p, targs.capacity * sizeof(Type),
-	                     targs.length * sizeof(Type));
-
 	types_eval(&tfun);
 	f.s = types_gen(tfun);
 	types_set_ctx_len(clen);

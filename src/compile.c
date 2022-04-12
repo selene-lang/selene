@@ -254,8 +254,12 @@ static u8
 compile_fun_call(Expr f, Array args, int dest, CompileContext *c)
 {
 	Instruction i;
+	u8 cargs[args.length];
 	Expr *x;
 
+	x = (Expr *)args.p;
+	for (int j = 0; j < args.length; ++j)
+		cargs[j] = compile_expr(x[j], -1, c);
 	if (dest == -1)
 		dest = new_reg(c);
 	i.a = dest;
@@ -267,7 +271,8 @@ compile_fun_call(Expr f, Array args, int dest, CompileContext *c)
 	x = (Expr *)args.p;
 	i = (Instruction){ 0 };
 	for (int j = 0; j < args.length; ++j) {
-		i.a = compile_expr(x[j], -1, c);
+		i.a = cargs[j];
+		free_reg(i.a, c);
 		chunk_write(&c->chunk, i);
 	}
 	return dest;
