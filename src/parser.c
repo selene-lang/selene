@@ -39,7 +39,11 @@ static int prec(enum token t);
 static int assoc(enum token t);
 static Expr rulef(enum token t, Expr e);
 
-static Expr number(void);
+static int hexdigit(char c);
+
+static Expr integer(void);
+static Expr bool(void);
+static Expr character(void);
 static Expr var(void);
 static Expr unary(void);
 static Expr simple_expr(void);
@@ -90,6 +94,10 @@ static const int tok2op[TOKEN_EOF + 1] = {
 	[TOKEN_MINUS]     = O_MINUS,
 	[TOKEN_MULT]      = O_MULT,
 	[TOKEN_DIV]       = O_DIV
+};
+
+static const long escape_character[256] = {
+	['\\'] = '\\', ['n'] = '\n', ['t'] = '\t', ['\''] = '\''
 };
 
 void
@@ -202,17 +210,54 @@ rulef(enum token t, Expr e)
 	return rules[t].f(e);
 }
 
+static int
+hexdigit(char c)
+{
+	return c <= '9' ? c - '0' : c - '0' + 10;
+}
+
 static Expr
-number(void)
+integer(void)
 {
 	Expr e;
 
-	e = (Expr){.number = 0};
-	for (int i = 0; i < parser.previous.length; ++i)
-		if (parser.previous.src[i] != '_')
-			e.number = e.number * 10 + parser.previous.src[i] - '0';
-	e.type = E_NUM;
-	e.t = types_int;
+	e = (Expr){.inumber = 0, .type = E_INT, .t = types_int};
+	for (int i = 0; i < parser.previous.length; ++i) {
+		if (parser.previous.src[i] != '_') {
+			e.inumber *= 10;
+			e.inumber += parser.previous.src[i] - '0';
+		}
+	}
+	return e;
+}
+
+static Expr
+bool(void)
+{
+	Expr e;
+
+	e = (Expr){.type = E_INT, .t = types_bool,
+	           .inumber = (long)(parser.previous.t - TOKEN_FALSE)};
+
+	return e;
+}
+
+static Expr
+character(void)
+{
+	Expr e;
+	char *s;
+
+	e = (Expr){.type = E_INT, .t = types_char};
+	s = parser.previous.src;
+	if (s[1] == '\\') {
+		if (s[2] == 'x')
+			e.inumber = 16 * hexdigit(s[3]) + (int)s[4];
+		else
+			e.inumber = escape_character[(int)s[2]];
+	} else {
+		e.inumber = (long)(s[1]);
+	}
 	return e;
 }
 
@@ -245,7 +290,11 @@ static Expr
 simple_expr(void)
 {
 	if (match(TOKEN_INT)) {
-		return number();
+		return integer();
+	} else if (match(TOKEN_TRUE) || match(TOKEN_FALSE)) {
+		return bool();
+	} else if (match(TOKEN_CHAR)) {
+		return character();
 	} else if (isunary(peek())) {
 		next_token();
 		return unary();
@@ -288,7 +337,6 @@ binop(Expr lhs)
 	e.op = tok2op[t];
 	return e;
 }
-#include "debug.h"
 
 static Expr
 fun_call(Expr fun)
@@ -313,7 +361,7 @@ fun_call(Expr fun)
 	t.args = emalloc(e.args.length * sizeof(Type));
 	for (int i = 0; i < e.args.length; ++i)
 		t.args[i] = ((Expr *)e.args.p)[i].t;
-	
+
 
 	types_unify(t, fun.t);
 	e.t = *t.res;

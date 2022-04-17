@@ -8,6 +8,7 @@
 typedef struct {
 	struct {
 		int nreg;
+		int is_owned;
 		char *name;
 	} var[128];
 	u8 regs[128];

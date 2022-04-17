@@ -5,6 +5,8 @@
 
 u64 c_print_int(void *p);
 u64 c_print_newline(void *p);
+u64 c_print_char(void *p);
+u64 c_print_bool(void *p);
 
 u64 c_addi(void *p);
 u64 c_subi(void *p);

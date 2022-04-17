@@ -43,6 +43,7 @@ Array context = {
 
 Type types_int = {.type = T_CON, .args = NULL, .arity = 0, .name = "int"};
 Type types_bool = {.type = T_CON, .args = NULL, .arity = 0, .name = "bool"};
+Type types_char = {.type = T_CON, .args = NULL, .arity = 0, .name = "char"};
 Type types_void = {.type = T_CON, .args = NULL, .arity = 0, .name = "void"};
 
 static void

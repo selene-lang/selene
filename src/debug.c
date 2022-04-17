@@ -68,6 +68,12 @@ print_token(Token t)
 	case TOKEN_INT:
 		printf("int");
 		break;
+	case TOKEN_CHAR:
+		printf("char");
+		break;
+	case TOKEN_FLOAT:
+		printf("float");
+		break;
 	case TOKEN_EXTERN:
 	case TOKEN_WHILE:
 	case TOKEN_FUN:
@@ -75,6 +81,8 @@ print_token(Token t)
 	case TOKEN_LET:
 	case TOKEN_IF:
 	case TOKEN_ELSE:
+	case TOKEN_TRUE:
+	case TOKEN_FALSE:
 		printf("keyword");
 		break;
 	case TOKEN_EOF:
@@ -141,8 +149,8 @@ print_expr(Expr e)
 		}
 		printf("]");
 		break;
-	case E_NUM:
-		printf("\"integer\":%d", e.number);
+	case E_INT:
+		printf("\"integer\":%ld", e.inumber);
 		break;
 	case E_FUNCALL:
 		printf("\"call\":{\"function\":");

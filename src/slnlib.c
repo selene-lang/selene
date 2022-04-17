@@ -4,42 +4,74 @@
 
 #include "slnlib.h"
 
+static u64 tagl(long l);
+static long untagl(u64 v);
+
+static u64
+tagl(long l)
+{
+	return (u64)((l << 1) | 1);
+}
+
+static long
+untagl(u64 v)
+{
+	return (long)v >> 1;
+}
+
 u64
 c_print_int(void *p)
 {
-	printf("%d", *(int *)p);
-	return 0;
+	printf("%ld", untagl(*(u64 *)p));
+	return tagl(0);
 }
 
 u64
 c_print_newline(void *p)
 {
 	printf("\n");
-	return 0;
+	return tagl(0);
+}
+
+u64
+c_print_char(void *p)
+{
+	printf("%c", (char)untagl(*(u64 *)p));
+	return tagl(0);
+}
+
+u64
+c_print_bool(void *p)
+{
+	if (untagl(*(u64 *)p))
+		printf("true");
+	else
+		printf("false");
+	return tagl(0);
 }
 
 u64
 c_addi(void *p)
 {
-	return (u64)(((long *)p)[0] + ((long *)p)[1]);
+	return tagl(untagl(((u64 *)p)[0]) + untagl(((u64 *)p)[1]));
 }
 
 u64
 c_subi(void *p)
 {
-	return (u64)(((long *)p)[0] - ((long *)p)[1]);
+	return tagl(untagl(((u64 *)p)[0]) - untagl(((u64 *)p)[1]));
 }
 
 u64
 c_muli(void *p)
 {
-	return (u64)(((long *)p)[0] * ((long *)p)[1]);
+	return tagl(untagl(((u64 *)p)[0]) * untagl(((u64 *)p)[1]));
 }
 
 u64
 c_divi(void *p)
 {
-	return (u64)(((long *)p)[0] / ((long *)p)[1]);
+	return tagl(untagl(((u64 *)p)[0]) / untagl(((u64 *)p)[1]));
 }
 
 u64

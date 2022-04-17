@@ -25,15 +25,18 @@ static int check_keyword(int n, char *s);
 static enum token check_one_keyword(int n, char *s, enum token t);
 static enum token ident_type(void);
 
+static int isescape(int c);
+
 static Token number(void);
 static Token identifier(void);
+static Token character(void);
 
 static Lexer lexer;
 static const enum token single_token_table[255] = {
 	['('] = TOKEN_OPAR,  [')'] = TOKEN_CPAR, ['{'] = TOKEN_OBRA,
 	['}'] = TOKEN_CBRA,  [';'] = TOKEN_SEMI, ['+'] = TOKEN_PLUS,
 	['/'] = TOKEN_DIV,   ['*'] = TOKEN_MULT, [','] = TOKEN_COMMA,
-	[':'] = TOKEN_COL,
+	[':'] = TOKEN_COL
 };
 
 static Token
@@ -130,23 +133,39 @@ ident_type(void)
 	case 'e':
 		if (check_keyword(1, "else"))
 			return TOKEN_ELSE;
-		else if (check_keyword(1, "extern"))
-			return TOKEN_EXTERN;
-		return TOKEN_IDENT;
-	case 'f': return check_one_keyword(1, "fun", TOKEN_FUN);
+		else
+			return check_one_keyword(1, "extern", TOKEN_EXTERN);
+	case 'f':
+		if (check_keyword(1, "false"))
+			return TOKEN_FALSE;
+		else
+			return check_one_keyword(1, "fun", TOKEN_FUN);
 	case 'i': return check_one_keyword(1, "if", TOKEN_IF);
 	case 'l': return check_one_keyword(1, "let", TOKEN_LET);
 	case 'r': return check_one_keyword(1, "return", TOKEN_RETURN);
+	case 't': return check_one_keyword(1, "true", TOKEN_TRUE);
 	case 'w': return check_one_keyword(1, "while", TOKEN_WHILE);
 	}
 	return TOKEN_IDENT;
+}
+
+static int
+isescape(int c)
+{
+	return c == 'n' || c == '0' || c == '\\' || c == '\'' || c == '"'
+	    || c == 't';
 }
 
 static Token
 number(void)
 {
 	while (isdigit(peek())) next_char();
-	return mktoken(TOKEN_INT);
+	if (match('.')) {
+		while (isdigit(peek())) next_char();
+		return mktoken(TOKEN_FLOAT);
+	} else {
+		return mktoken(TOKEN_INT);
+	}
 }
 
 static Token
@@ -155,6 +174,27 @@ identifier(void)
 	while (isalnum(peek()) || peek() == '_' || peek() == '\'')
 		next_char();
 	return mktoken(ident_type());
+}
+
+static Token
+character(void)
+{
+	if (match('\\')) {
+		if (match('x')) {
+			if (!isxdigit(next_char()))
+				exit(1);
+			if (!isxdigit(next_char()))
+				exit(1);
+		} else {
+			if (!isescape(next_char()))
+				exit(1);
+		}
+	} else {
+		next_char();
+	}
+	if (!match('\''))
+		exit(1);
+	return mktoken(TOKEN_CHAR);
 }
 
 Token
@@ -176,6 +216,8 @@ lexer_get_token(void)
 		return number();
 	if (isalpha(c) || c == '_')
 		return identifier();
+	if (c == '\'')
+		return character();
 
 	switch (c) {
 	case '=':

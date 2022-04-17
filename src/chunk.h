@@ -10,6 +10,7 @@ typedef enum {
 	OP_EQUI, OP_GRTI, OP_LWRI,
 	OP_CJMP, OP_NJMP, OP_UJMP,
 	OP_CALL, OP_CCALL,
+	OP_DUP, OP_DROP,
 	OP_MOV
 } OpCode;
 

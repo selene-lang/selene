@@ -28,7 +28,7 @@ typedef struct {
 
 struct expr {
 	enum {
-		E_VAR, E_NUM, E_OP, E_FUNCALL
+		E_VAR, E_INT, E_OP, E_FUNCALL
 	} type;
 	Expr *left;
 	Expr *right;
@@ -38,7 +38,11 @@ struct expr {
 		Type *args;
 		int len;
 	} polybind;
-	int number;
+	union {
+		float fnumber;
+		double dnumber;
+		long inumber;
+	};
 	enum {
 		O_PLUS, O_MINUS, O_MULT, O_DIV, O_NEG, O_EQU, O_GRT, O_GRTEQ,
 		O_LWR, O_LWREQ, O_ASSGN

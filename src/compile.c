@@ -34,6 +34,8 @@ static struct ext {
 	FunPtr f;
 } slnlib_ext_dict[] = {
 	{"c_print_int", c_print_int},
+	{"c_print_char", c_print_char},
+	{"c_print_bool", c_print_bool},
 	{"c_print_newline", c_print_newline}
 };
 
@@ -87,7 +89,7 @@ add_const_int(long n, CompileContext *c)
 {
 	if (c->nconst >= 128)
 		exit(1);
-	c->chunk.values[c->nconst++] = (u64)n;
+	c->chunk.values[c->nconst++] = (u64)(n << 1);
 	return 128 + c->nconst - 1;
 }
 
@@ -130,6 +132,7 @@ add_var(char *var, CompileContext *c)
 		if (c->regs[i] == 0) {
 			c->var[i].name = var;
 			c->var[i].nreg = i;
+			c->var[i].is_owned = 1;
 			c->regs[i] = 2;
 			return i;
 		}
@@ -167,17 +170,14 @@ compile_int(int n, int dest, CompileContext *c)
 static u8
 compile_var(char *var, int dest, CompileContext *c)
 {
-	u8 r;
 
-	r = 255;
 	for (int i = 0; i < 128; ++i) {
 		if (c->var[i].name != NULL && !strcmp(var, c->var[i].name)) {
-			r = i;
-			break;
+			if (c->var[i].is_owned)
+				c->var[i].is_owned = 0;
+			return move_no_dest(i, dest, c);
 		}
 	}
-	if (r != 255)
-		return move_no_dest(r, dest, c);
 
 	for (int i = 0; i < fun_ctx.length; ++i) {
 		if (!strcmp(var, ((char **)fun_ctx.p)[i])) {
@@ -282,8 +282,8 @@ static u8
 compile_expr(Expr e, int dest, CompileContext *c)
 {
 	switch (e.type) {
-	case E_NUM:
-		return compile_int(e.number, dest, c);
+	case E_INT:
+		return compile_int(e.inumber, dest, c);
 	case E_OP:
 		return compile_op(e.left, e.right, e.op, dest, c);
 	case E_VAR:

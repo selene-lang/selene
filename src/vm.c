@@ -2,6 +2,7 @@
 
 static u64 load(u8 r, VM *vm);
 static long loadl(u8 r, VM *vm);
+static u64 tagl(long l);
 
 static u64
 load(u8 r, VM *vm)
@@ -15,7 +16,13 @@ load(u8 r, VM *vm)
 static long
 loadl(u8 r, VM *vm)
 {
-	return (long)load(r, vm);
+	return ((long)load(r, vm)) >> 1;
+}
+
+static u64
+tagl(long l)
+{
+	return (u64)((l << 1) | 1);
 }
 
 void
@@ -35,38 +42,38 @@ vm_run(VM *vm)
 		Instruction i = p[vm->pc];
 		switch (i.op) {
 		case OP_ADDI:
-			vm->reg[i.a] = (u64)(loadl(i.b, vm) + loadl(i.c, vm));
+			vm->reg[i.a] = tagl(loadl(i.b, vm) + loadl(i.c, vm));
 			break;
 		case OP_SUBI:
-			vm->reg[i.a] = (u64)(loadl(i.b, vm) - loadl(i.c, vm));
+			vm->reg[i.a] = tagl(loadl(i.b, vm) - loadl(i.c, vm));
 			break;
 		case OP_MULI:
-			vm->reg[i.a] = (u64)(loadl(i.b, vm) * loadl(i.c, vm));
+			vm->reg[i.a] = tagl(loadl(i.b, vm) * loadl(i.c, vm));
 			break;
 		case OP_DIVI:
-			vm->reg[i.a] = (u64)(loadl(i.b, vm) / loadl(i.c, vm));
+			vm->reg[i.a] = tagl(loadl(i.b, vm) / loadl(i.c, vm));
 			break;
 		case OP_EQUI:
-			vm->reg[i.a] = (u64)(long)(load(i.b, vm) == load(i.c, vm));
+			vm->reg[i.a] = tagl(loadl(i.b, vm) == loadl(i.c, vm));
 			break;
 		case OP_GRTI:
-			vm->reg[i.a] = (u64)(long)(load(i.b, vm) > load(i.c, vm));
+			vm->reg[i.a] = tagl(loadl(i.b, vm) > loadl(i.c, vm));
 			break;
 		case OP_LWRI:
-			vm->reg[i.a] = (u64)(long)(load(i.b, vm) < load(i.c, vm));
+			vm->reg[i.a] = tagl(loadl(i.b, vm) < loadl(i.c, vm));
 			break;
 		case OP_CJMP:
 			++vm->pc;
-			if (load(i.a, vm))
+			if (loadl(i.a, vm))
 				vm->pc = *(u32 *)(p + vm->pc) - 1;
 			break;
 		case OP_UJMP:
-			vm->pc = *(int *)(p + vm->pc + 1) - 1;
+			vm->pc = *(u32 *)(p + vm->pc + 1) - 1;
 			break;
 		case OP_NJMP:
 			++vm->pc;
-			if (load(i.a, vm) == 0)
-				vm->pc = *(int *)(p + vm->pc) - 1;
+			if (loadl(i.a, vm) == 0)
+				vm->pc = *(u32 *)(p + vm->pc) - 1;
 			break;
 		case OP_MOV:
 			vm->reg[i.a] = load(i.b, vm);
