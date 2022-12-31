@@ -152,6 +152,7 @@ types_unify(Type t1, Type t2)
 		for (int i = 0; i < t1.arity; ++i)
 			types_unify(t1.args[i], t2.args[i]);
 	} else if (t1.type == T_FUN && t2.type == T_FUN) {
+		printf("%d\n%d\n", t1.arity, t2.arity);
 		if (t1.arity != t2.arity)
 			unify_error();
 		for (int i = 0; i < t1.arity; ++i)

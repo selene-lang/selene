@@ -11,6 +11,7 @@ typedef struct {
 		int is_owned;
 		char *name;
 	} var[128];
+	Array bindings;
 	u8 regs[128];
 	int nconst;
 	Chunk chunk;

@@ -40,6 +40,11 @@ static struct ext {
 	{"c_print_newline", c_print_newline}
 };
 
+struct fun {
+	char *name;
+	Type *binds;
+};
+
 static Array fun_ctx = {
 	.p = NULL,
 	.esize = sizeof(char *),

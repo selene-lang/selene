@@ -78,7 +78,7 @@ static const ParseRule rules[TOKEN_EOF + 1] = {
 	[TOKEN_GREATEREQ] = {ASSOC_NONE, P_COMP, binop},
 	[TOKEN_LOWER] = {ASSOC_NONE, P_COMP, binop},
 	[TOKEN_LOWEREQ] = {ASSOC_NONE, P_COMP, binop},
-	[TOKEN_COMMA] = {ASSOC_LEFT, P_TUPLE, tuple},
+	//[TOKEN_COMMA] = {ASSOC_LEFT, P_TUPLE, tuple},
 	[TOKEN_PLUS] = {ASSOC_LEFT, P_TERM, binop},
 	[TOKEN_MINUS] = {ASSOC_LEFT, P_TERM, binop},
 	[TOKEN_MULT] = {ASSOC_LEFT, P_FACT, binop},
@@ -408,7 +408,6 @@ fun_call(Expr fun)
 	for (int i = 0; i < e.args.length; ++i)
 		t.args[i] = ((Expr *)e.args.p)[i].t;
 
-
 	types_unify(t, fun.t);
 	e.t = *t.res;
 	types_eval_expr(&e);
@@ -418,6 +417,7 @@ fun_call(Expr fun)
 static Expr
 expr(void)
 {
+
 	return parse_precedence(P_ASSIGN);
 }
 
@@ -628,6 +628,7 @@ function(void)
 	clen = types_get_ctx_len();
 	array_init(&targs, sizeof(Type));
 	array_init(&f.args, sizeof(char *));
+	array_init(&s.bindings, sizeof(int));
 
 	f.name = ident();
 
@@ -654,6 +655,7 @@ function(void)
 	types_add_var(f.name, s);
 
 	f.body = block();
+
 
 	buf = *tfun.res;
 	block_ret_type(f.body, buf);
