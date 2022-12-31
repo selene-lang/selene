@@ -13,4 +13,6 @@ typedef void *u64;
 
 typedef u64 (*FunPtr)(void *);
 
+void *memcpy(void *, const void *, size_t);
+
 #endif /* __COMMON_H_ */

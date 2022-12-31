@@ -1,4 +1,4 @@
-#include <string.h>
+#include "common.h"
 
 #include "lexer.h"
 #include "memory.h"
@@ -12,8 +12,8 @@ typedef struct {
 } Parser;
 
 enum precedence {
-	P_ASSIGN = 10, P_EQU = 20, P_COMP = 30, P_TERM = 40, P_FACT = 50,
-	P_UNARY = 60, P_CALL = 70
+	P_ASSIGN = 10, P_EQU = 20, P_COMP = 30, P_TUPLE = 40, P_TERM = 50,
+	P_FACT = 60, P_UNARY = 70, P_CALL = 80
 };
 
 enum associativity {
@@ -42,12 +42,14 @@ static Expr rulef(enum token t, Expr e);
 static int hexdigit(char c);
 
 static Expr integer(void);
+static Expr floating(void);
 static Expr bool(void);
 static Expr character(void);
 static Expr var(void);
 static Expr unary(void);
 static Expr simple_expr(void);
 static Expr binop(Expr lhs);
+static Expr tuple(Expr fst);
 static Expr fun_call(Expr fun);
 static Expr expr(void);
 static Expr parse_precedence(int precedence);
@@ -70,17 +72,18 @@ static TopLevel top_level(void);
 
 static Parser parser;
 static const ParseRule rules[TOKEN_EOF + 1] = {
-	[TOKEN_ASSIGN]    = {ASSOC_RIGHT, P_ASSIGN, binop},
-	[TOKEN_EQUAL]     = {ASSOC_LEFT,  P_EQU,    binop},
-	[TOKEN_GREATER]   = {ASSOC_NONE,  P_COMP,   binop},
-	[TOKEN_GREATEREQ] = {ASSOC_NONE,  P_COMP,   binop},
-	[TOKEN_LOWER]     = {ASSOC_NONE,  P_COMP,   binop},
-	[TOKEN_LOWEREQ]   = {ASSOC_NONE,  P_COMP,   binop},
-	[TOKEN_PLUS]      = {ASSOC_LEFT,  P_TERM,   binop},
-	[TOKEN_MINUS]     = {ASSOC_LEFT,  P_TERM,   binop},
-	[TOKEN_MULT]      = {ASSOC_LEFT,  P_FACT,   binop},
-	[TOKEN_DIV]       = {ASSOC_LEFT,  P_FACT,   binop},
-	[TOKEN_OPAR]      = {ASSOC_LEFT,  P_CALL,   fun_call},
+	[TOKEN_ASSIGN] = {ASSOC_RIGHT, P_ASSIGN, binop},
+	[TOKEN_EQUAL] = {ASSOC_LEFT, P_EQU, binop},
+	[TOKEN_GREATER] = {ASSOC_NONE, P_COMP, binop},
+	[TOKEN_GREATEREQ] = {ASSOC_NONE, P_COMP, binop},
+	[TOKEN_LOWER] = {ASSOC_NONE, P_COMP, binop},
+	[TOKEN_LOWEREQ] = {ASSOC_NONE, P_COMP, binop},
+	[TOKEN_COMMA] = {ASSOC_LEFT, P_TUPLE, tuple},
+	[TOKEN_PLUS] = {ASSOC_LEFT, P_TERM, binop},
+	[TOKEN_MINUS] = {ASSOC_LEFT, P_TERM, binop},
+	[TOKEN_MULT] = {ASSOC_LEFT, P_FACT, binop},
+	[TOKEN_DIV] = {ASSOC_LEFT, P_FACT, binop},
+	[TOKEN_OPAR] = {ASSOC_LEFT, P_CALL, fun_call}
 };
 
 static const int tok2op[TOKEN_EOF + 1] = {
@@ -232,6 +235,30 @@ integer(void)
 }
 
 static Expr
+floating(void)
+{
+	Expr e;
+	int i;
+	double f;
+
+	f = 1 / 10.0;
+	e = (Expr){.fnumber = 0.0, .type = E_FLOAT, .t = types_float};
+	for (i = 0; parser.previous.src[i] != '.'; ++i) {
+		if (parser.previous.src[i] != '_') {
+			e.fnumber *= 10.0;
+			e.fnumber += (double)(parser.previous.src[i] - '0');
+		}
+	}
+	for (++i; i < parser.previous.length; ++i) {
+		if (parser.previous.src[i] != '_') {
+			e.fnumber += (double)(parser.previous.src[i] - '0') * f;
+			f /= 10.0;
+		}
+	}
+	return e;
+}
+
+static Expr
 bool(void)
 {
 	Expr e;
@@ -291,6 +318,8 @@ simple_expr(void)
 {
 	if (match(TOKEN_INT)) {
 		return integer();
+	} else if (match(TOKEN_FLOAT)) {
+		return floating();
 	} else if (match(TOKEN_TRUE) || match(TOKEN_FALSE)) {
 		return bool();
 	} else if (match(TOKEN_CHAR)) {
@@ -335,6 +364,23 @@ binop(Expr lhs)
 	e.left = exprdup(lhs);
 	e.right = exprdup(rhs);
 	e.op = tok2op[t];
+	return e;
+}
+
+static Expr
+tuple(Expr fst)
+{
+	Expr e;
+
+	e.type = E_TUPLE;
+	e.left = exprdup(fst);
+	e.right = exprdup(parse_precedence(P_TUPLE + 1));
+
+	e.t.type = T_CON;
+	e.t.name = "tuple";
+	e.t.args = emalloc(2 * sizeof(Type));
+	e.t.args[0] = e.left->t;
+	e.t.args[1] = e.right->t;
 	return e;
 }
 
@@ -415,12 +461,17 @@ function_type(void)
 		} while (match(TOKEN_COMMA));
 		expect(TOKEN_CPAR);
 	}
-	expect(TOKEN_ARR);
 
-	t.type = T_FUN;
 	t.args = (Type *)args.p;
 	t.arity = args.length;
-	t.res = types_dup(type());
+
+	if (match(TOKEN_ARR)) {
+		t.type = T_FUN;
+		t.res = types_dup(type());
+	} else {
+		t.type = T_CON;
+		t.name = "tuple";
+	}
 	return t;
 }
 
@@ -448,12 +499,12 @@ block(void)
 	Statement s;
 	int ctx_len;
 
-	expect(TOKEN_OBRA);
+	expect(TOKEN_OBRACE);
 
 	ctx_len = types_get_ctx_len();
 	array_init(&a, sizeof(Statement));
 
-	while (!match(TOKEN_CBRA)) {
+	while (!match(TOKEN_CBRACE)) {
 		s = statement();
 		array_write(&a, &s);
 	}

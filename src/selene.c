@@ -16,7 +16,7 @@ char *program = "extern c_print_int : int -> void;"
 	"fun print_char(c){c_print_char(c);}"
 	"fun print_bool(c){c_print_bool(c);}"
 	"fun fib(n){if n < 2 {return n;}else{return fib(n-1) + fib(n-2);}}"
-	"fun main(){print_int(fib(30));print_char('e');print_bool(false);}";
+	"fun main(){let a = 1, 2;print_int(fib(30));print_char('e');print_bool(false);}";
 
 int
 main(int argc, char **argv)
@@ -29,7 +29,6 @@ main(int argc, char **argv)
 	tl = parser_program();
 
 	vm_prog = compile_program(tl);
-	puts("ee");
 	vm_init(&vm, vm_prog.fun + 4);
 	vm_run(&vm);
 }

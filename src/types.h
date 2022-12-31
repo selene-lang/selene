@@ -8,6 +8,7 @@ extern Type types_int;
 extern Type types_bool;
 extern Type types_void;
 extern Type types_char;
+extern Type types_float;
 
 void types_unify(Type t1, Type t2);
 Type types_fresh_tvar(void);

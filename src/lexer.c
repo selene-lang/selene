@@ -33,10 +33,10 @@ static Token character(void);
 
 static Lexer lexer;
 static const enum token single_token_table[255] = {
-	['('] = TOKEN_OPAR,  [')'] = TOKEN_CPAR, ['{'] = TOKEN_OBRA,
-	['}'] = TOKEN_CBRA,  [';'] = TOKEN_SEMI, ['+'] = TOKEN_PLUS,
-	['/'] = TOKEN_DIV,   ['*'] = TOKEN_MULT, [','] = TOKEN_COMMA,
-	[':'] = TOKEN_COL
+	['('] = TOKEN_OPAR, [')'] = TOKEN_CPAR, ['{'] = TOKEN_OBRACE,
+	['}'] = TOKEN_CBRACE, ['['] = TOKEN_OBRACK, [']'] = TOKEN_CBRACK,
+	[';'] = TOKEN_SEMI, ['+'] = TOKEN_PLUS, ['/'] = TOKEN_DIV,
+	['*'] = TOKEN_MULT, [','] = TOKEN_COMMA, [':'] = TOKEN_COL
 };
 
 static Token
@@ -159,9 +159,9 @@ isescape(int c)
 static Token
 number(void)
 {
-	while (isdigit(peek())) next_char();
+	while (isdigit(peek()) || peek() == '_') next_char();
 	if (match('.')) {
-		while (isdigit(peek())) next_char();
+		while (isdigit(peek()) || peek() == '_') next_char();
 		return mktoken(TOKEN_FLOAT);
 	} else {
 		return mktoken(TOKEN_INT);

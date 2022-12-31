@@ -1,0 +1,27 @@
+* Read programs from files
+* REPL
+* Boolean operations
+* Support for more constants
+* Floats
+* Garbage collector or Reference counting
+* Strings
+* Tuple
+* Lists
+* Lambda functions
+* Format strings
+* Records
+* Hash tables
+* UTF-8
+* Elif construct
+* Partial application
+* Reading extern functions from elf objects
+* Monomorphisation
+* ADTs / Pattern matching
+* User defined infix operators
+* Check functions always return
+* Better error messages
+* For loops
+* Do while loops
+* Module system
+* JIT
+* Benchmarks

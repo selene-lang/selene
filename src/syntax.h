@@ -28,7 +28,7 @@ typedef struct {
 
 struct expr {
 	enum {
-		E_VAR, E_INT, E_OP, E_FUNCALL
+		E_VAR, E_INT, E_OP, E_FUNCALL, E_TUPLE, E_FLOAT
 	} type;
 	Expr *left;
 	Expr *right;
@@ -39,8 +39,7 @@ struct expr {
 		int len;
 	} polybind;
 	union {
-		float fnumber;
-		double dnumber;
+		double fnumber;
 		long inumber;
 	};
 	enum {

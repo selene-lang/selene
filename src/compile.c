@@ -22,6 +22,7 @@ static u8 compile_var(char *var, int dest, CompileContext *c);
 static u8 compile_assign(u8 v, Expr e, int dest, CompileContext *c);
 static u8 compile_op(Expr *lhs, Expr *rhs, int op, int dest, CompileContext *c);
 static u8 compile_fun_call(Expr f, Array args, int dest, CompileContext *c);
+static u8 compile_tuple(Expr f, Expr s, int dest, CompileContext *c);
 
 static u8 compile_expr(Expr e, int dest, CompileContext *c);
 static void compile_statement(Statement s, CompileContext *c);
@@ -279,6 +280,36 @@ compile_fun_call(Expr f, Array args, int dest, CompileContext *c)
 }
 
 static u8
+compile_tuple(Expr f, Expr s, int dest, CompileContext *c)
+{
+	Instruction i;
+	u8 r;
+
+	if (dest == -1)
+		dest = new_reg(c);
+	i.op = OP_ALLOC;
+	i.a = dest;
+	i.b = add_const_int(2, c);
+	chunk_write(&c->chunk, i);
+
+	i.op = OP_PWRITE;
+	r = compile_expr(f, -1, c);
+	i.a = dest;
+	i.b = add_const_int(0, c);
+	i.c = r;
+	chunk_write(&c->chunk, i);
+	free_reg(r, c);
+
+	r = compile_expr(s, -1, c);
+	i.b = add_const_int(1, c);
+	i.c = r;
+	chunk_write(&c->chunk, i);
+	free_reg(r, c);
+
+	return dest;
+}
+
+static u8
 compile_expr(Expr e, int dest, CompileContext *c)
 {
 	switch (e.type) {
@@ -290,6 +321,8 @@ compile_expr(Expr e, int dest, CompileContext *c)
 		return compile_var(e.name, dest, c);
 	case E_FUNCALL:
 		return compile_fun_call(*e.left, e.args, dest, c);
+	case E_TUPLE:
+		return compile_tuple(*e.left, *e.right, dest, c);
 	}
 }
 
@@ -348,6 +381,7 @@ static Chunk
 compile_function(Function f)
 {
 	CompileContext c;
+	Instruction ret;
 
 	array_write(&fun_ctx, &f.name);
 	memset(&c, 0, sizeof(CompileContext));
@@ -356,6 +390,8 @@ compile_function(Function f)
 	for (int i = 0; i < f.args.length; ++i)
 		(void)add_var(((char **)f.args.p)[i], &c);
 	compile_body(f.body, &c);
+	ret = (Instruction){.op = OP_RET, .a = add_const_int(0, &c)};
+	chunk_write(&c.chunk, ret);
 	return c.chunk;
 }
 

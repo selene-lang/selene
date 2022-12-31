@@ -5,15 +5,15 @@
 #include "syntax.h"
 
 static char *op2string[] = {
-	[O_PLUS]  = "plus",
+	[O_DIV] = "division",
+	[O_NEG] = "negation",
+	[O_EQU] = "equal",
+	[O_GRT] = "greater",
+	[O_LWR] = "lower",
+	[O_PLUS] = "plus",
+	[O_MULT] = "multiplication",
 	[O_MINUS] = "minus",
-	[O_MULT]  = "multiplication",
-	[O_DIV]   = "division",
-	[O_NEG]   = "negation",
-	[O_EQU]   = "equal",
-	[O_GRT]   = "greater",
 	[O_GRTEQ] = "greater/equal",
-	[O_LWR]   = "lower",
 	[O_LWREQ] = "lower/equal",
 	[O_ASSGN] = "assignment"
 };
@@ -23,8 +23,8 @@ static struct print_instruction {
 	int narg;
 	u8 extra_arg;
 } instruction2string[] = {
-	[OP_RET]  = {"ret", 1, 0},
-	[OP_MOV]  = {"mov", 2, 0},
+	[OP_RET] = {"ret", 1, 0},
+	[OP_MOV] = {"mov", 2, 0},
 	[OP_ADDI] = {"addi", 3, 0},
 	[OP_SUBI] = {"subi", 3, 0},
 	[OP_MULI] = {"multi", 3, 0},
@@ -34,7 +34,7 @@ static struct print_instruction {
 	[OP_UJMP] = {"ujmp", 0, 1},
 	[OP_NJMP] = {"njmp", 1, 1},
 	[OP_CALL] = {"call", 2, 2},
-	[OP_VOID] = {"void", 0, 0}
+	[OP_CCALL] = {"ccall", 2, 2},
 };
 
 void
@@ -53,8 +53,10 @@ print_token(Token t)
 	case TOKEN_COMMA:
 	case TOKEN_OPAR:
 	case TOKEN_CPAR:
-	case TOKEN_OBRA:
-	case TOKEN_CBRA:
+	case TOKEN_OBRACE:
+	case TOKEN_CBRACE:
+	case TOKEN_OBRACK:
+	case TOKEN_CBRACK:
 	case TOKEN_PLUS:
 	case TOKEN_MINUS:
 	case TOKEN_MULT:
@@ -167,6 +169,13 @@ print_expr(Expr e)
 		       op2string[e.op]);
 		print_expr(*e.left);
 		printf(",\"rhs\":");
+		print_expr(*e.right);
+		printf("}");
+		break;
+	case E_TUPLE:
+		printf("\"tuple\":{\"left\":");
+		print_expr(*e.left);
+		printf(",\"right\":");
 		print_expr(*e.right);
 		printf("}");
 		break;
@@ -304,7 +313,7 @@ print_chunk(Chunk c)
 		print_instruction(((Instruction *)c.code.p) + i);
 		if (op == OP_UJMP || op == OP_NJMP || op == OP_CJMP)
 			++i;
-		if (op == OP_CALL)
+		if (op == OP_CALL || op == OP_CCALL)
 			i += (*(Instruction *)c.code.p).c;
 	}
 	printf("]}}");

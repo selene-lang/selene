@@ -1,4 +1,5 @@
 #include "vm.h"
+#include "memory.h"
 
 static u64 load(u8 r, VM *vm);
 static long loadl(u8 r, VM *vm);
@@ -78,8 +79,6 @@ vm_run(VM *vm)
 		case OP_MOV:
 			vm->reg[i.a] = load(i.b, vm);
 			break;
-		case OP_VOID:
-			return 0;
 		case OP_RET:
 			return load(i.a, vm);
 		case OP_CALL: {
@@ -99,6 +98,20 @@ vm_run(VM *vm)
 			vm->pc += i.c;
 			break;
 		}
+		case OP_ALLOC: {
+			u64 *p;
+			p = emalloc((loadl(i.b, vm) + 1) * sizeof(u64));
+			((u32 *)p)[0] = (u32)loadl(i.b, vm);
+			((u32 *)p)[1] = 1;
+			vm->reg[i.a] = (u64)p;
+			break;
+		}
+		case OP_PWRITE:
+			((u64 *)load(i.a, vm))[loadl(i.b, vm) + 1] = load(i.c, vm);
+			break;
+		case OP_PREAD:
+			vm->reg[i.a] = ((u64 *)load(i.b, vm))[loadl(i.c, vm) + 1];
+			break;
 		}
 		++vm->pc;
 	}
