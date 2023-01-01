@@ -329,3 +329,26 @@ types_dup(Type t)
 	*dup = t;
 	return dup;
 }
+
+int
+types_equ(Type t1, Type t2)
+{
+	if (t1.type != t2.type)
+		return 0;
+	switch (t1.type) {
+	case T_FUN:
+		if (!types_equ(*t1.res, *t2.res))
+			return 0; /* fallthrought */
+	case T_CON:
+		if (t1.arity != t2.arity)
+			return 0;
+		for (int i = 0; i < t1.arity; ++i)
+			if (!types_equ(t1.args[i], t2.args[i]))
+				return 0;
+		break;
+	case T_VAR:
+		return -1; /* types_equ should not be used on types with type
+		            * variables. */ 
+	}
+	return 1;
+}

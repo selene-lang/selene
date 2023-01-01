@@ -29,4 +29,6 @@ void types_eval_block(Array a);
 
 Type *types_dup(Type t);
 
+int types_equ(Type t1, Type t2);
+
 #endif
